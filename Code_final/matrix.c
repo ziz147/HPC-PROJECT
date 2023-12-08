@@ -311,7 +311,7 @@ void saveListOfVectors( ListOfVectors listOfVectors, const char *filename) {
 
     for (int i = 0; i < listOfVectors.size; i++) {
         for (int j = 0; j < listOfVectors.vectors[i].length; j++) {
-            fprintf(file, "%lf", listOfVectors.vectors[i].data[j]);
+            fprintf(file, "%d", (int)listOfVectors.vectors[i].data[j]);
             if (j < listOfVectors.vectors[i].length - 1) {
                 fprintf(file, " ");
             }
