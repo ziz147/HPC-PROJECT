@@ -215,7 +215,7 @@ void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vec
             // on a enlever la deuxieme condition == pour le ou et on a ajouter <= pour fussiopnner les deux conditions ???
             int b1 = (u1_val <= U1.data[(int)matrice(IND_mask_tot, k, 0) + p1_temp + 1] && u1_val >= U1.data[(int)matrice(IND_mask_tot, k, 0)]);
             int b2 = (u2_val <= U2.data[(int)matrice(IND_mask_tot, k, 1) + p2_temp + 1] && u2_val >= U2.data[(int)matrice(IND_mask_tot, k, 1)]);
-            int b3 = (u3_val <= U3.data[(int)matrice(IND_mask_tot, k, 1) + p3_temp + 1] && u3_val >= U3.data[(int)matrice(IND_mask_tot, k, 1)]);
+            int b3 = (u3_val <= U3.data[(int)matrice(IND_mask_tot, k, 2) + p3_temp + 1] && u3_val >= U3.data[(int)matrice(IND_mask_tot, k, 2)]);
             
             if (b1 && b2 && b3) {
                     ind_temp[count] = i;
