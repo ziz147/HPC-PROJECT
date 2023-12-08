@@ -3,9 +3,14 @@
 #include <stdint.h>
 #include <stdio.h>
 
+/* On définit ici les fonctions dans l'ordre suivant: ls_2d_numba, ls_3d_numba,
+ local_support_fun (Dans le code python cette fonction a été définie en premier)*/
 
+
+//Cette fonction calcul le support local en 2D
 
 void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vector U1, Vector U2, int p1_temp, int p2_temp, int n1_temp, int n2_temp, ListOfVectors *local_Support, Matrix *BF_Support, Vector *IND_mask_active) {
+
     // Obtenir la taille de la matrice IND_mask
     int N_ROWS_mask = IND_mask.rows;
     int N_COLS_mask = IND_mask.cols;
@@ -28,8 +33,10 @@ void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vec
     IND_mask_active->data = (double*)malloc(1 * sizeof(double));
     local_Support->vectors = (Vector *)malloc(1 * sizeof(Vector));
     local_Support->size = 0;
+
     // Pour chaque CP du modèle (actif et inactif)
     for (int k = 0; k < IND_mask_tot.rows; k++) {
+
         // Obtenir les indices liés à IND_mask_active
         int IND_mask_tot_temp_cols = IND_mask_tot.cols;
         int IND_mask_temp_cols = IND_mask_temp.cols;
@@ -39,7 +46,8 @@ void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vec
         for (int i = 0; i < IND_mask_tot_temp_cols; i++) {
             IND_mask_tot_temp[i] = matrice(IND_mask_tot, k, i);
         }
-        //  boucle pour teste la condition if IND_mask_tot_temp in IND_mask_temp: 
+
+        // Vérification de l'appartenance de IND_mask_tot_temp à IND_mask_temp 
         int found = 1;
         for (int i = 0; i < IND_mask_temp_rows; i++) {
             found = 1;
@@ -64,12 +72,14 @@ void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vec
         int count = 0;
         // on fait une boucle car en python numpy permet d'automatiser les comparatif sur les vecteur 
         // mais en c on doit la faire manuellement
+
+        //Parcours des points de contrôle 
         for (int i = 0; i < u1.rows; i++) {
             double u1_val = u1.data[i];
             double u2_val = u2.data[i];
 
             // Vérifier les conditions 
-            // on a enlever la deuxieme condition == pour le ou et on a ajouter <= pour fussiopnner les deux conditions
+            //la deuxieme condition a été enlevé, ie pour le ou et on a ajouté <= pour fusionner les deux conditions
             int b1 = (u1_val <= U1.data[(int)matrice(IND_mask_tot, k, 0) + p1_temp + 1] && u1_val >= U1.data[(int)matrice(IND_mask_tot, k, 0)]);
             int b2 = (u2_val <= U2.data[(int)matrice(IND_mask_tot, k, 1) + p2_temp + 1] && u2_val >= U2.data[(int)matrice(IND_mask_tot, k, 1)]);
             if (b1 && b2) {
@@ -77,7 +87,8 @@ void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vec
                 count++;
             }
         }
-        // on alloue la bonne taille a ind
+
+        //Allocation et copie des indices i
         int *ind = malloc(count * sizeof(int));
         for (int i = 0; i < count; i++)
         {
@@ -88,7 +99,7 @@ void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vec
 
 
 
-        
+        //Si l'indice se trouve dans IND_Mask_temp
         if (found == 1) {
     
             // Réallouer la mémoire pour IND_mask_active
@@ -96,7 +107,8 @@ void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vec
             IND_mask_active->data = (double *)realloc(IND_mask_active->data, newSize * sizeof(double));
             IND_mask_active->length =newSize;
             IND_mask_active->data[newSize-1] = k;
-            // cree un nouveau vecteur et alloc ind avec count
+
+///////////// crée une nouvelle list et alloue ind avec count
             // Ajouter les indices à local_Support
             
             
@@ -109,7 +121,8 @@ void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vec
         
             
         }
-            // Évaluer le produit de la fonction de base des éléments appartenant au support local (essayer sur tous les éléments appartenant à LS)
+            // Évaluer le produit de la fonction de base des éléments appartenant au support local 
+            //(essayer sur tous les éléments appartenant à LS)
             Matrix P_rho_aux;
             definem(&P_rho_aux, n1_temp + 1, n2_temp + 1);
             mzero(&P_rho_aux);
@@ -133,6 +146,7 @@ void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vec
                 
             }
 
+            // Initialisation de w avec des valeurs à 1
             for (int i1 = 0; i1 < n1_temp+1; i1++)
             {
                 for (int i2 = 0; i2 < n2_temp; i2++)
@@ -144,6 +158,7 @@ void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vec
             // on declare tempo car en c on peut pas remplir une colonne a partir d'un vecteur sans boucle
             Vector tempo;
 
+            // Appel de la fonction SurfacePoint_fun_numba
             tempo = SurfacePoint_fun_numba(u, n1_temp, p1_temp, U1, v, n2_temp, p2_temp, U2, P_rho_aux, w, 0);
 
             // remplir la matrice BF_support
@@ -164,6 +179,7 @@ void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vec
 
 
 
+ //Calcul du local support en 3D
 
  void ls_3d(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2,Matrix u3 , Vector U1, Vector U2, Vector U3, int p1_temp, int p2_temp, int p3_temp, int n1_temp, int n2_temp, int n3_temp,ListOfVectors *local_Support, Matrix *BF_Support, Vector *IND_mask_active){
     // Obtenir la taille de la matrice IND_mask
@@ -223,13 +239,15 @@ void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vec
         int count = 0;
         // on fait une boucle car en python numpy permet d'automatiser les comparatif sur les vecteur 
         // mais en c on doit la faire manuellement
+
+        //Parcours des points de contrôle 
         for (int i = 0; i < u1.rows; i++) {
             double u1_val = u1.data[i];
             double u2_val = u2.data[i];
             double u3_val = u3.data[i];
 
             // Vérifier les conditions 
-            // on a enlever la deuxieme condition == pour le ou et on a ajouter <= pour fussiopnner les deux conditions ???
+            //La deuxieme condition a été enlevé == pour le ou et on a ajouté <= pour fusionner les deux conditions ???
             int b1 = (u1_val <= U1.data[(int)matrice(IND_mask_tot, k, 0) + p1_temp + 1] && u1_val >= U1.data[(int)matrice(IND_mask_tot, k, 0)]);
             int b2 = (u2_val <= U2.data[(int)matrice(IND_mask_tot, k, 1) + p2_temp + 1] && u2_val >= U2.data[(int)matrice(IND_mask_tot, k, 1)]);
             int b3 = (u3_val <= U3.data[(int)matrice(IND_mask_tot, k, 2) + p3_temp + 1] && u3_val >= U3.data[(int)matrice(IND_mask_tot, k, 2)]);
@@ -250,6 +268,7 @@ void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vec
         free(ind_temp);
 
 
+        //Si l'indice est trouvé dans IND_mask_temp
         if (found == 1) {
             // Réallouer la mémoire pour IND_mask_active
             int newSize = IND_mask_active->length + 1;
@@ -314,6 +333,7 @@ void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vec
 
 
 
+//La fonction principale pour calculer le support local en fonction de la dimension
 void local_support_fun(int p1, int p2, int p3, int n1, int n2, int n3, int DIM, Matrix ELEMENTS, Matrix IND_mask, Matrix IND_mask_tot, Vector U1, Vector U2, Vector U3, ListOfVectors *local_Support, Matrix *BF_Support, Vector *IND_mask_active) {
         // on a ajouter p1 .. n3 comme variable dans la fonction pour ne pas avoir a les déclarer comme variables generale
         // reste a ajouter la condition if flag_scale == 'micro_macro': ici
