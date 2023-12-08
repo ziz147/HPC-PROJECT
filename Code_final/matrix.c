@@ -1,8 +1,14 @@
+/* On définit ici les différentes fonctions  qui ont été
+ utilisées dans les différentes fonctions du code*/
+ //Ces fonctions fonctions permettent de gérer les opérations effectuées
+ //sur les matrices et les vecteurs
+
+
 #include "matrix.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-
+//Charger la matrice à partir d'un fichier 
 Matrix loadMatrix(const char *filename) {
     Matrix result;
     FILE *file = fopen(filename, "r");
@@ -59,7 +65,7 @@ Matrix loadMatrix(const char *filename) {
     return result;
 }
 
-
+//Charger un vecteur à partir d'un fichier(U1.dat par exemple) 
 Vector loadVector(const char *filename) {
     Vector result;
     FILE *file = fopen(filename, "r");
@@ -96,7 +102,7 @@ Vector loadVector(const char *filename) {
     return result;
 }
 
-
+//Afficher le contenu de la matrice 
 void printMatrix(const Matrix matrix) {
     for (int i = 0; i < matrix.rows; i++) {
         for (int j = 0; j < matrix.cols; j++) {
@@ -109,7 +115,7 @@ void printMatrix(const Matrix matrix) {
     }
 }
 
-
+//Afficher le contenu du vecteur
 void printVector(Vector vector) {
     for (int i = 0; i < vector.length; i++) {
         printf("%lf ", vector.data[i]);
@@ -117,6 +123,7 @@ void printVector(Vector vector) {
     printf("\n");
 }
 
+//Extraire une colonne spécifique de la  matrice sous forme de vecteur.
 Vector col(const Matrix matrix, int i) {
     if (i < 0 || i >= matrix.cols) {
         fprintf(stderr, "Error: Invalid column index\n");
@@ -133,6 +140,8 @@ Vector col(const Matrix matrix, int i) {
 
     return result;
 }
+
+//Extraire une colonne spécifique d'une matrice 3D sous forme de matrice 2D
 Matrix col3d(const Matrix matrix, int j) {
     if (j < 0 || j >= matrix.cols) {
         fprintf(stderr, "Error: Invalid column index\n");
@@ -151,7 +160,8 @@ Matrix col3d(const Matrix matrix, int j) {
 }
 
 
-
+//Calculer le produit Hadamard de deux matrices
+//(Ce produit a été utilisé dans la fonction Hypersurface.c)
 void hadamard_product(const Matrix *P, const Matrix *w, Matrix *p_w) {
     // Vérifier si les dimensions sont compatibles
     if (P->rows != w->rows || P->cols != w->cols || P->rows != p_w->rows || P->cols != p_w->cols) {
@@ -172,7 +182,7 @@ void hadamard_product(const Matrix *P, const Matrix *w, Matrix *p_w) {
     p_w->cols = P->cols;
 }
 
-
+//Calcule le produit Hadamard de deux matrices 3D
 void hadamard_product3d(Matrix P, Matrix w, Matrix *p_w) {
     // Vérifier si les dimensions sont compatibles
     if (P.rows != w.rows || P.cols != w.cols || P.depth != w.depth ||
@@ -202,12 +212,14 @@ void hadamard_product3d(Matrix P, Matrix w, Matrix *p_w) {
 
 
 
-
+//Intialiser la taille d'une matrice 
 void definem(Matrix* M, int i, int j) {
     M->rows = i;
     M->cols = j;
     M->data = (double*)malloc(i * j * sizeof(double));
 }
+
+//Initialiser la matrice telle que M(i,j) = i+j+2
 void initializeMatrix(Matrix *mat,int n,int m) {
     mat->rows = n;
     mat->cols = m;
@@ -218,6 +230,8 @@ void initializeMatrix(Matrix *mat,int n,int m) {
         }
     }
 }
+
+//Initialiser un vecteur tel que v(i) = i+1
 void initializeVecteur(Vector *vec,int n) {
     vec->length = n;
     vec->data = (double*)malloc(n * sizeof(double));
@@ -225,6 +239,8 @@ void initializeVecteur(Vector *vec,int n) {
             vec->data[i] = i+1;  // Assigning random values between 0 and 1
         }
     }
+
+//Initialiser la matrice avec des zéros
 void mzero(Matrix *mat) {
     for (int i = 0; i < mat->rows; i++) {
         for (int j = 0; j < mat->cols; j++) {
@@ -233,6 +249,7 @@ void mzero(Matrix *mat) {
     }
 }
 
+//Sauvegarder un vecteur dans un fichier
 void saveVector(Vector vector, const char *filename) {
     FILE *file = fopen(filename, "w");
 
@@ -248,6 +265,8 @@ void saveVector(Vector vector, const char *filename) {
         fprintf(stderr, "Erreur lors de l'ouverture du fichier %s\n", filename);
     }
 }
+
+//Sauvegarder la matrice dans un fichier
 void saveMatrix(Matrix matrix, const char *filename) {
     FILE *file = fopen(filename, "w");
     if (file == NULL) {
@@ -268,6 +287,7 @@ void saveMatrix(Matrix matrix, const char *filename) {
     fclose(file);
 }
 
+//Libérer la mémoire allouée pour un vecteur
 void freeVector(Vector *vector) {
     free(vector->data);
     vector->length = 0;
@@ -276,7 +296,7 @@ void freeVector(Vector *vector) {
 
 
 
-
+//Ajouter un vecteur à une liste de vecteurs
 void addVectorToList(ListOfVectors *listOfVectors, int vectorLength) {
     // Utiliser realloc pour agrandir le tableau de vecteurs
     listOfVectors->vectors = (Vector *)realloc(listOfVectors->vectors, (listOfVectors->size + 1) * sizeof(Vector));
@@ -290,7 +310,7 @@ void addVectorToList(ListOfVectors *listOfVectors, int vectorLength) {
 
 
 
-
+//Extraire les valeurs d'une colonne spécifique d'une matrice
 Vector extractValues(Matrix BF_Support, int* ind, int k, int size) {
     Vector extractedValues;
     extractedValues.data = (double*)malloc(size * sizeof(double));
@@ -302,6 +322,7 @@ Vector extractValues(Matrix BF_Support, int* ind, int k, int size) {
 
 
 
+//Sauvegarder une liste de vecteurs dans un fichier
 void saveListOfVectors( ListOfVectors listOfVectors, const char *filename) {
     FILE *file = fopen(filename, "w");
     if (file == NULL) {
@@ -323,7 +344,7 @@ void saveListOfVectors( ListOfVectors listOfVectors, const char *filename) {
 }
 
 
-
+//Libérer une liste de vecteurs
 void freeListOfVectors(ListOfVectors *list) {
     if (list != NULL) {
         // Libérer chaque vecteur dans la liste
