@@ -8,8 +8,9 @@ Le code final est contenu dans le dossier Code_final.
 
 ## Compilation et exécution du code
 - Pour compiler le code, tapez sur le terminal la commande **make** et puis **./main** pour exécuter le programme généré.
-- Pour nettoyer les fichiers objets, utilisez la commande **make clean**.
-
+- Pour nettoyer les fichiers objets, utilisez la commande **make clean** et **make test** pour supprimer les fichiers.txt.
+- Un fichier **main.py** a été ajouté pour enregistrer les matrices de sorties.
+  
 
 
 
