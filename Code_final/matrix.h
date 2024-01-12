@@ -7,6 +7,16 @@ typedef struct {
     int cols;
     int depth;
 } Matrix;
+
+typedef struct 
+{
+    double *data;
+    int *rows;
+    int *cols;
+    int nnz ; //Nombre d'éléments non nuls
+
+} COOMatrix ;
+
 #define initmatrice3d(matrix, d1, d2, d3) \
     do { \
         (matrix).rows = (d1); \
@@ -46,9 +56,12 @@ typedef struct {
 
 Matrix loadMatrix(const char *filename);
 Vector loadVector(const char *filename);
+COOMatrix loadCOO(const char *filename);
 void printVector(Vector vector);
 void printMatrix(const Matrix matrix);
 Vector col(const Matrix matrix, int i);
+Vector line(const Matrix matrix, int i); 
+void hadamard_vector_product(const Matrix *P, const Vector *w, Matrix *p_w);
 void hadamard_product(const Matrix *P, const Matrix *w, Matrix *p_w);
 void hadamard_product3d(const Matrix P, const Matrix w, Matrix *p_w);
 void definem(Matrix* M, int i, int j);
@@ -61,7 +74,11 @@ void addVectorToList(ListOfVectors *listOfVectors, int vectorLength);
 void initVector(Vector *vector, int length);
 Vector extractValues(Matrix BF_Support, int* ind, int k, int size);
 void saveMatrix(Matrix matrix, const char *filename);
+void saveCOO(COOMatrix coo, const char *filename);
 void saveListOfVectors( ListOfVectors listOfVectors, const char *filename);
 Matrix col3d(const Matrix matrix, int j);
 void freeListOfVectors(ListOfVectors *list);
+Vector Mat_vec_product(Matrix A, Vector B);
+COOMatrix denseToCOO(Matrix matrix);
+Matrix COOtoDense(COOMatrix coo, int rows, int cols);
 #endif

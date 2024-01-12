@@ -6,6 +6,7 @@
 
 #include "matrix.h"
 #include <stdio.h>
+#include <math.h>
 #include <stdlib.h>
 
 //Charger la matrice à partir d'un fichier 
@@ -63,6 +64,34 @@ Matrix loadMatrix(const char *filename) {
 
     fclose(file);
     return result;
+}
+
+// Charger une matrice qui a un format COO
+COOMatrix loadCOO(const char *filename) {
+    COOMatrix coo;
+
+    FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+        perror("Erreur lors de l'ouverture du fichier");
+        exit(EXIT_FAILURE);
+    }
+
+    // Lire le nombre d'éléments non nuls
+    fscanf(file, "%d", &coo.nnz);
+
+    // Allouer de la mémoire pour les tableaux COO
+    coo.rows = (int *)malloc(coo.nnz * sizeof(int));
+    coo.cols = (int *)malloc(coo.nnz * sizeof(int));
+    coo.data = (double *)malloc(coo.nnz * sizeof(double));
+
+    // Lire les éléments de la matrice COO depuis le fichier
+    for (int k = 0; k < coo.nnz; k++) {
+        fscanf(file, "%d %d %lf", &coo.rows[k], &coo.cols[k], &coo.data[k]);
+    }
+
+    fclose(file);
+
+    return coo;
 }
 
 //Charger un vecteur à partir d'un fichier(U1.dat par exemple) 
@@ -141,6 +170,24 @@ Vector col(const Matrix matrix, int i) {
     return result;
 }
 
+//Extraire une ligne spécifique de la  matrice sous forme de vecteur.
+Vector line(const Matrix matrix, int i) {
+    if (i < 0 || i >= matrix.rows) {
+        fprintf(stderr, "Error: Invalid column index\n");
+        exit(EXIT_FAILURE);
+    }
+
+    Vector result;
+    result.length = matrix.cols;
+    result.data = (double *)malloc(result.length * sizeof(double));
+
+    for (int cols = 0; cols < matrix.cols; cols++) {
+        result.data[cols] = matrice(matrix, i, cols);
+    }
+
+    return result;
+}
+
 //Extraire une colonne spécifique d'une matrice 3D sous forme de matrice 2D
 Matrix col3d(const Matrix matrix, int j) {
     if (j < 0 || j >= matrix.cols) {
@@ -157,6 +204,26 @@ Matrix col3d(const Matrix matrix, int j) {
     }
 
     return result;
+}
+
+void hadamard_vector_product(const Matrix *P, const Vector *w, Matrix *p_w) {
+    // Vérifier si les dimensions sont compatibles
+    if (P->rows != w->length || P->rows != p_w->rows || P->cols != p_w->cols) {
+        // Gérer l'erreur ou retourner, selon vos besoins
+        return;
+    }
+
+    // Effectuer la multiplication Hadamard
+    for (int i = 0; i < P->rows; i++) {
+        for (int j = 0; j < P->cols; j++) {
+
+            matrice(*p_w, i, j) = matrice(*P, i, j) * w->data[j];
+        }
+    }
+
+    // Définir les dimensions de p_w
+    p_w->rows = P->rows;
+    p_w->cols = P->cols;
 }
 
 
@@ -287,6 +354,26 @@ void saveMatrix(Matrix matrix, const char *filename) {
     fclose(file);
 }
 
+//Sauvegarder la matrice en format COO dans un fichier 
+
+void saveCOO(COOMatrix coo, const char *filename) {
+    FILE *file = fopen(filename, "w");
+    if (file == NULL) {
+        perror("Erreur lors de l'ouverture du fichier");
+        return;
+    }
+
+    // Écrire le nombre d'éléments non nuls
+    fprintf(file, "%d\n", coo.nnz);
+
+    // Écrire les éléments de la matrice COO
+    for (int i = 0; i < coo.nnz; i++) {
+        fprintf(file, "%d %d %lf\n", coo.rows[i], coo.cols[i], coo.data[i]);
+    }
+
+    fclose(file);
+}
+
 //Libérer la mémoire allouée pour un vecteur
 void freeVector(Vector *vector) {
     free(vector->data);
@@ -360,4 +447,83 @@ void freeListOfVectors(ListOfVectors *list) {
         // Réinitialiser la taille de la liste
         list->size = 0;
     }
+}
+
+Vector Mat_vec_product(Matrix A, Vector B) {
+    Vector result;
+    result.length = A.rows;
+
+    result.data = (double *)malloc(result.length * sizeof(double));
+
+    if (result.data == NULL) {
+        fprintf(stderr, "Erreur d'allocation mémoire\n");
+        exit(EXIT_FAILURE);
+    }
+
+    for (int i = 0; i < result.length; i++) {
+        result.data[i] = 0.0;
+        for (int j = 0; j < A.cols; j++) {
+            result.data[i] += matrice(A, i, j) * B.data[j];
+        }
+    }
+
+    return result;
+}
+
+COOMatrix denseToCOO(Matrix matrix) {
+    COOMatrix coo;
+    int rows = matrix.rows;
+    int cols = matrix.cols;
+    coo.nnz = 0;
+
+    // Compter le nombre d'éléments non nuls
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            if (fabs(matrice(matrix, i, j)) > 1e-10) {
+                coo.nnz++;
+            }
+        }
+    }
+
+    // Allouer de la mémoire pour les tableaux COO
+    coo.rows = (int *)malloc(coo.nnz * sizeof(int));
+    coo.cols = (int *)malloc(coo.nnz * sizeof(int));
+    coo.data = (double *)malloc(coo.nnz * sizeof(double));
+
+    int nnz_index = 0;
+
+    // Remplir les tableaux COO
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            if (fabs(matrice(matrix, i, j)) > 1e-10) {
+                coo.rows[nnz_index] = i;
+                coo.cols[nnz_index] = j;
+                coo.data[nnz_index] = matrice(matrix, i, j);
+                nnz_index++;
+            }
+        }
+    }
+
+    return coo;
+}
+
+
+Matrix COOtoDense(COOMatrix coo, int rows, int cols) {
+    // Allouer la matrice dense
+    Matrix denseMatrix ;
+    denseMatrix.rows = rows;
+    denseMatrix.cols = cols;
+    denseMatrix.data = (double*)malloc(rows * cols * sizeof(double));
+
+    // Initialiser la matrice dense à zéro
+    for (int i = 0; i < rows * cols; i++) {
+        denseMatrix.data[i] = 0.0;
+    }
+
+    // Remplir la matrice dense à partir de la matrice COO
+    for (int k = 0; k < coo.nnz; k++) {
+        matrice(denseMatrix,coo.rows[k],coo.cols[k]) = coo.data[k];
+    }
+
+    return denseMatrix;
 }
