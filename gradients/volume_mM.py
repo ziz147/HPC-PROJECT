@@ -63,6 +63,7 @@ def volume_grad_fun(rho_e, P_rho, W, ELEMENTS, IND_mask, local_support, BF_suppo
             
         elif flag_scale != 'micro_macro':   #MICROSCALE / Standard scale
             sym_coef_temp = sym_coef
+        ## ON a ajouter cette condition car on a pas la fonction shepard_support pour executer le code
         flag_shepard=0
         #--------------------------------------------------------------------------
         if DIM==2:            
