@@ -81,4 +81,13 @@ void freeListOfVectors(ListOfVectors *list);
 Vector Mat_vec_product(Matrix A, Vector B);
 COOMatrix denseToCOO(Matrix matrix);
 Matrix COOtoDense(COOMatrix coo, int rows, int cols);
+Vector Vec_product(Vector X, Vector Y);
+int compare(const void *a, const void *b);
+void SortElements(const Vector *input, Vector *output);
+void selectRows(const Matrix *source, const Vector *indices, Matrix *destination);
+void selectColumns(const Matrix *source, const Vector *columnIndices, Matrix *destination);
+void extractElementsAndReshape(const Matrix *W, const Matrix *indices, Vector *output, int col_1, int col_2);
+void sum_axis_0(Matrix *matrix, Vector *result);
+Matrix matrix_vector_multiply(Matrix *A, Vector *x);
+Vector vector_concatenate(Vector *v1, Vector *v2) ;
 #endif

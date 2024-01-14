@@ -527,3 +527,166 @@ Matrix COOtoDense(COOMatrix coo, int rows, int cols) {
 
     return denseMatrix;
 }
+
+Vector Vec_product(Vector X, Vector Y){
+    Vector result;
+    if (X.length != Y.length) {
+        fprintf(stderr, "Erreur : pas la même taille des vecteurs\n");
+        exit(EXIT_FAILURE);
+    }
+    result.length = X.length;
+    result.data = (double*)malloc(result.length * sizeof(double));
+
+    for(int i; i < result.length; i++){
+        result.data[i] = X.data[i]*Y.data[i]; 
+    }
+}
+
+int compare(const void *a, const void *b) {
+    double val1 = *(const double *)a;
+    double val2 = *(const double *)b;
+    return (val1 > val2) - (val1 < val2);
+}
+
+void SortElements(const Vector *input, Vector *output) {
+    // Tri du tableau d'entrée
+    qsort(input->data, input->length, sizeof(double), compare);
+
+    // Allouer de la mémoire pour output->data
+    output->data = (double *)malloc(input->length * sizeof(double));
+    if (output->data == NULL) {
+        // Gérer l'erreur d'allocation
+        exit(1);
+    }
+
+    // Copier les éléments uniques dans output->data
+    int uniqueCount = 0;
+    for (int i = 0; i < input->length; i++) {
+        if (i == 0 || input->data[i] != input->data[i - 1]) {
+            output->data[uniqueCount++] = input->data[i];
+        }
+    }
+
+    // Réallouer output->data pour correspondre à la taille réelle
+    output->data = (double *)realloc(output->data, uniqueCount * sizeof(double));
+    if (output->data == NULL && uniqueCount > 0) {
+        // Gérer l'erreur de réallocation
+        exit(1);
+    }
+
+    // Ajuster la longueur du tableau de sortie
+    output->length = uniqueCount;
+}
+
+
+
+// pour selectionner les lignes
+void selectRows(const Matrix *source, const Vector *indices, Matrix *destination) {
+    // Allouer de la mémoire pour destination
+    destination->rows = indices->length;
+    destination->cols = source->cols;
+    destination->data = (double *)malloc(destination->rows * destination->cols * sizeof(double));
+
+    if (destination->data == NULL) {
+        // Gérer l'erreur d'allocation
+        exit(1);
+    }
+
+    // Copier les lignes
+    for (int i = 0; i < indices->length; i++) {
+        int rowIndex = (int)indices->data[i]; // Assurez-vous que les indices sont des entiers
+        for (int j = 0; j < source->cols; j++) {
+            destination->data[i * destination->cols + j] = source->data[rowIndex * source->cols + j];
+        }
+    }
+}
+
+// pour selectionner les colonnes
+void selectColumns(const Matrix *source, const Vector *columnIndices, Matrix *destination) {
+    // Initialiser la matrice de destination
+    destination->rows = source->rows;
+    destination->cols = columnIndices->length;
+    destination->data = (double *)malloc(destination->rows * destination->cols * sizeof(double));
+
+    if (destination->data == NULL) {
+        // Gérer l'erreur d'allocation
+        exit(1);
+    }
+
+    // Copier les colonnes sélectionnées
+    for (int i = 0; i < source->rows; i++) {
+        for (int j = 0; j < columnIndices->length; j++) {
+            int colIndex = (int)columnIndices->data[j]; // Assurez-vous que les indices sont des entiers
+            destination->data[i * destination->cols + j] = source->data[i * source->cols + colIndex];
+        }
+    }
+}
+
+
+
+////////////
+void extractElementsAndReshape(const Matrix *W, const Matrix *indices, Vector *output, int col_1, int col_2) {
+    output->length = indices->rows;
+    output->data = (double *)malloc(output->length * sizeof(double));
+
+    if (output->data == NULL) {
+        // Gérer l'erreur d'allocation
+        exit(1);
+    }
+
+    for (int i = 0; i < indices->rows; i++) {
+        int firscolIndex = (int)indices->data[i * indices->cols + col_1 ];     
+        int secondcolIndex = (int)indices->data[i * indices->cols + col_2]; 
+        int depthIndex = 0;
+        output->data[i] = matrice3d(*W, firscolIndex, secondcolIndex, depthIndex);
+    }
+}
+
+//////
+// éuivalent de np.sum( matrice , axis = 0)
+void sum_axis_0(Matrix *matrix, Vector *result) {
+    for (int col = 0; col < matrix->cols; col++) {
+        double sum = 0;
+        for (int row = 0; row < matrix->rows; row++) {
+            // Accéder à l'élément de la matrice
+            sum += matrix->data[row * matrix->cols + col];
+        }
+        result->data[col] = sum;
+    }
+}
+
+
+// équivalent du produit élément par élément d'une matrice par un  vecteur en python A*x
+Matrix matrix_vector_multiply(Matrix *A, Vector *x){
+    Matrix result;
+    result.rows= A->rows;
+    result.cols= A->cols;
+    result.data = (double *)malloc(result.rows * result.cols * sizeof(double));
+
+    for (int i = 0; i < A->rows; i++) {
+        double product = 0;
+        for (int j = 0; j < A->cols; j++) {
+            product= A->data[i * A->cols + j] * x->data[j];
+            result.data[i * A->cols + j] = product;
+        }
+    }
+
+    return result;
+}
+
+// équivalent de np.concatenate pour nos vecteurs
+Vector vector_concatenate(Vector *v1, Vector *v2) {
+    Vector result;
+    result.length = v1->length + v2->length;
+    result.data = (double *)malloc(result.length * sizeof(double));
+
+    for (int i = 0; i < v1->length; i++) {
+        result.data[i] = v1->data[i];
+    }
+
+    for (int i = 0; i < v2->length; i++) {
+        result.data[v1->length + i] = v2->data[i];
+    }
+
+    return result;
+}
