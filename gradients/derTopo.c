@@ -99,7 +99,8 @@ void extractElementsAndReshape(const Matrix *W, const Matrix *indices, Vector *o
     for (int i = 0; i < indices->rows; i++) {
         int rowIndex = (int)indices->data[i * indices->cols];     // Première colonne d'IND_mask
         int colIndex = (int)indices->data[i * indices->cols + 1]; // Deuxième colonne d'IND_mask
-        output->data[i] = W->data[rowIndex * W->cols + colIndex];
+        int depthIndex = 0;
+        output->data[i] = matrice3d(*W, rowIndex, colIndex, depthIndex);
     }
 }
 
@@ -126,7 +127,7 @@ void matrixVectorMultiplication(const Matrix *A, const Vector *B, Vector *C) {
 
 
 
-void der_NURBS(ListOfVectors local_support , Matrix BF_support , Vector IND_mask_active , Matrix IND_mask, Matrix IND_mask_tot ,Matrix rho_e, Matrix P_rho , Matrix W, int DIM, Vector* der_CP, Vector* der_W, Vector* BF_mask){
+void der_NURBS(ListOfVectors local_support , Matrix BF_support , Vector IND_mask_active , Matrix IND_mask, Matrix IND_mask_tot ,Matrix rho_e, Matrix P_rho , Matrix W, int DIM, Matrix* der_CP, Matrix* der_W, Vector* BF_mask){
     
     if (DIM == 2){
 
@@ -163,7 +164,7 @@ void der_NURBS(ListOfVectors local_support , Matrix BF_support , Vector IND_mask
         /* BF_mask */ 
 
         SortElements(&local_support_flat, &BF_mask);
-
+        free(local_support_flat.data); 
         /* BF_support_temp */
         // BF_support_temp = BF_support[BF_mask,:] on a créer la fonction selectRows
         
@@ -193,7 +194,7 @@ void der_NURBS(ListOfVectors local_support , Matrix BF_support , Vector IND_mask
         // Allouer de la mémoire pour Nij_w
         Nij_w.data = (double *)malloc(Nij_w.rows * Nij_w.cols * sizeof(double));
         hadamard_vector_product(&BF_support_temp, &W_temp, &Nij_w); // dans les fonctions de matrice
-
+        free(W_temp.data); 
         //S_w = (BF_support.dot(W_S_temp))[BF_mask]
 
 
@@ -201,22 +202,31 @@ void der_NURBS(ListOfVectors local_support , Matrix BF_support , Vector IND_mask
         S_w_temp.length=BF_support.rows;
         S_w_temp.data== (double *)malloc(S_w_temp.length * sizeof(double));
         matrixVectorMultiplication(&BF_support, &W_S_temp, &S_w_temp);
+        free(W_S_temp.data); 
         S_w.length=BF_mask->length;
         S_w.data== (double *)malloc(S_w.length * sizeof(double));
         for (int i = 0; i < BF_mask->length; i++) {
-        S_w.data[i] = S_w.data[(int)BF_mask->data[i]];
+            int index = (int)BF_mask->data[i]; // Obtenir l'indice de BF_mask
+            S_w.data[i] = S_w_temp.data[index];
+            // Vérifier que l'indice est valide
+            if (index < 0 || index >= S_w_temp.length) {
+            printf("Erreur : indice en dehors des limites dans S_w\n");
+            exit(1);
+            }
+
+            
         }
+        free(S_w_temp.data);
         // der_CP = Nij_w/S_w
-        Matrix der_CP;
-        der_CP.rows=Nij_w.rows;
-        der_CP.cols=Nij_w.cols;
-        der_CP.data = (double *)malloc(Nij_w.rows * Nij_w.cols * sizeof(double));
+        der_CP->rows=Nij_w.rows;
+        der_CP->cols=Nij_w.cols;
+        der_CP->data = (double *)malloc(Nij_w.rows * Nij_w.cols * sizeof(double));
         for (int i = 0; i < Nij_w.rows; i++) {
             for (int j = 0; j < Nij_w.cols; j++) {
-                der_CP.data[i * der_CP.cols + j] = Nij_w.data[i * Nij_w.cols + j] / S_w.data[i];
+                der_CP->data[i * der_CP->cols + j] = Nij_w.data[i * Nij_w.cols + j] / S_w.data[i];
             }
         }
-
+        free(Nij_w.data);
 
         //Nij_P = (BF_support_temp * P_temp.T)
         Matrix Nij_P;
@@ -224,17 +234,49 @@ void der_NURBS(ListOfVectors local_support , Matrix BF_support , Vector IND_mask
         Nij_P.cols = BF_support_temp.cols;
         Nij_P.data = (double *)malloc(Nij_P.rows * Nij_P.cols * sizeof(double));
         hadamard_vector_product(&BF_support_temp, &P_temp, &Nij_P);
+        free(P_temp.data);
+        //Nij_nurbs = (BF_support_temp * rho_e[BF_mask])
+        Matrix Nij_nurbs;
+        Nij_nurbs.rows = BF_support_temp.rows;
+        Nij_nurbs.cols = BF_support_temp.cols;
+        Nij_nurbs.data = (double *)malloc(Nij_nurbs.rows * Nij_nurbs.cols * sizeof(double));
 
-        //manque encore les lignes Nij_nurbs = (BF_support_temp * rho_e[BF_mask])
-        // et der_W = Nij_P/S_w - Nij_nurbs/S_w
+        Vector rho_e_masked;
+        rho_e_masked.length = BF_mask->length;
+        rho_e_masked.data = (double *)malloc(rho_e_masked.length * sizeof(double));
+        // Extraction des éléments de rho_e correspondants à BF_mask
+        for (int i = 0; i < BF_mask->length; i++) {
+            rho_e_masked.data[i] = rho_e.data[(int)BF_mask->data[i]];
+        }
+        hadamard_vector_product(&BF_support_temp, &rho_e_masked, &Nij_nurbs);
+        free(rho_e_masked.data);
+        // der_W = Nij_P/S_w - Nij_nurbs/S_w
+        der_W->rows = Nij_P.rows;
+        der_W->cols = Nij_P.cols;
+        der_W->data = (double *)malloc(der_W->rows * der_W->cols * sizeof(double));
 
+        for (int i = 0; i < der_W->rows; i++) {
+            for (int j = 0; j < der_W->cols; j++) {
+                double Nij_P_val = Nij_P.data[i * Nij_P.cols + j] / S_w.data[i];
+                double Nij_nurbs_val = Nij_nurbs.data[i * Nij_nurbs.cols + j] / S_w.data[i];
+                der_W->data[i * der_W->cols + j] = Nij_P_val - Nij_nurbs_val;
+            }
+        }
 
+        
 
+                   
+                
+                           
+        free(S_w.data);               
 
+                     
+        free(Nij_P.data);             
+        free(Nij_nurbs.data);
 
     } else { // DIM =3
 
-        // la 3d sera pareil avec quelques modification a tester pour demain
+        // la 3d sera pareil avec quelques modification a tester 
     }
 }
 
