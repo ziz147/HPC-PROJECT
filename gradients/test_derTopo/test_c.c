@@ -6,7 +6,7 @@
 #include "local_Support_mM.h"
 #include "derTopo.h"
 #include <time.h>
-
+#include <unistd.h>
 
 int main() {
     // Charger les données depuis les fichiers
@@ -37,31 +37,47 @@ int main() {
     ListOfVectors local_Support;
     Matrix BF_Support;
     Vector IND_mask_active;
-    fprintf(stderr, " Ici1");
+    fprintf(stderr, " Ici1\n");
     local_support_fun(p1, p2, p3, n1, n2, n3, DIM, ELEMENTS,IND_mask,IND_mask_tot,U1,U2, U3, &local_Support, &BF_Support, &IND_mask_active);
     free(ELEMENTS.data);
     free(U1.data);
     free(U2.data);
     free(U3.data);
-    fprintf(stderr, " Ici2");
-    Matrix P_rho_temp = loadMatrix("P_rho_test.dat");
-    Matrix P_rho;
-    P_rho=reshape3D(&P_rho_temp, 28, 28, 28);
-    free(P_rho_temp.data);
+    COOMatrix BF_SupportCOO;
+    BF_SupportCOO = convertToCOO(&BF_Support);  
+    fprintf(stderr,"depth: %d",BF_SupportCOO.depth);
+    BF_SupportCOO.depth=1;
+    free(BF_Support.data);
+    fprintf(stderr,"verif memoire");
+ 
+    //Matrix P_rho_temp = loadMatrix("P_rho_test.dat");
+    Matrix P_rho= loadMatrix("P_rho_test.dat");
+    P_rho.cols=28;
+    P_rho.rows=28;
+    P_rho.depth=28;
+   // reshape3D(&P_rho_temp, &P_rho, 28, 28, 28);
+    //free(P_rho_temp.data);
 
-    Matrix W_temp = loadMatrix("W_test.dat");
-    Matrix W;
-    W=reshape3D(&W_temp, 28, 28, 28);
-    free(W_temp.data);
+   // Matrix W_temp = loadMatrix("W_test.dat");
+    Matrix W= loadMatrix("W_test.dat");
+    W.cols=28;
+    W.rows=28;
+    W.depth=28;
+    //reshape3D(&W_temp,&W, 28, 28, 28);
+   // saveMatrix(W,"der_CP_c.txt");
+   // free(W_temp.data);
     Vector rho_e = loadVector("rho_e_test.dat");
+    
 
-
-    Matrix der_CP, der_W; 
+    Matrix der_CP; 
     Vector BF_mask;
-    der_NURBS(local_Support ,BF_Support ,IND_mask_active , IND_mask, IND_mask_tot ,rho_e, P_rho , W, 2, &der_CP, &der_W, &BF_mask);
+    COOMatrix der_W;
+    fprintf(stderr, " der nurbs \n");
+    der_NURBS(local_Support ,BF_SupportCOO ,IND_mask_active , IND_mask, IND_mask_tot ,rho_e, P_rho , W, 2, &der_CP, &der_W, &BF_mask);
+    fprintf(stderr, " NURBS OK \n");
     saveVector(BF_mask, "BF_mask_c.txt");
     saveMatrix(der_CP,"der_CP_c.txt");
-    saveMatrix(der_W,"der_W_c.txt");
+    //saveMatrix(der_W,"der_W_c.txt");
 
 
     // Libérer la mémoire

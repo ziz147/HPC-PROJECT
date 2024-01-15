@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
-
+#include <string.h>
 //Charger la matrice à partir d'un fichier 
 Matrix loadMatrix(const char *filename) {
     Matrix result;
@@ -66,33 +66,7 @@ Matrix loadMatrix(const char *filename) {
     return result;
 }
 
-// Charger une matrice qui a un format COO
-COOMatrix loadCOO(const char *filename) {
-    COOMatrix coo;
 
-    FILE *file = fopen(filename, "r");
-    if (file == NULL) {
-        perror("Erreur lors de l'ouverture du fichier");
-        exit(EXIT_FAILURE);
-    }
-
-    // Lire le nombre d'éléments non nuls
-    fscanf(file, "%d", &coo.nnz);
-
-    // Allouer de la mémoire pour les tableaux COO
-    coo.rows = (int *)malloc(coo.nnz * sizeof(int));
-    coo.cols = (int *)malloc(coo.nnz * sizeof(int));
-    coo.data = (double *)malloc(coo.nnz * sizeof(double));
-
-    // Lire les éléments de la matrice COO depuis le fichier
-    for (int k = 0; k < coo.nnz; k++) {
-        fscanf(file, "%d %d %lf", &coo.rows[k], &coo.cols[k], &coo.data[k]);
-    }
-
-    fclose(file);
-
-    return coo;
-}
 
 //Charger un vecteur à partir d'un fichier(U1.dat par exemple) 
 Vector loadVector(const char *filename) {
@@ -228,6 +202,30 @@ void hadamard_vector_product(const Matrix *P, const Vector *w, Matrix *p_w) {
 }
 
 
+
+void hadamardVectorProductCOO(const COOMatrix *P, const Vector *w, COOMatrix *p_w) {
+    // Vérifier si les dimensions sont compatibles
+    if (P->cols != w->length) {
+        printf("Erreur produit incompatible\n");
+        return;
+    }
+
+    // Copier les dimensions et les indices de la matrice originale
+    *p_w = *P; // Copie superficielle pour conserver les indices et dimensions
+
+    // Effectuer la multiplication Hadamard sur les éléments non nuls
+    for (int i = 0; i < P->nonZeroCount; i++) {
+    int colIndex = P->colsIndices[i];
+    p_w->values[i] = P->values[i] * w->data[colIndex];
+    }
+    }
+
+
+
+
+
+
+
 //Calculer le produit Hadamard de deux matrices
 //(Ce produit a été utilisé dans la fonction Hypersurface.c)
 void hadamard_product(const Matrix *P, const Matrix *w, Matrix *p_w) {
@@ -355,25 +353,6 @@ void saveMatrix(Matrix matrix, const char *filename) {
     fclose(file);
 }
 
-//Sauvegarder la matrice en format COO dans un fichier 
-
-void saveCOO(COOMatrix coo, const char *filename) {
-    FILE *file = fopen(filename, "w");
-    if (file == NULL) {
-        perror("Erreur lors de l'ouverture du fichier");
-        return;
-    }
-
-    // Écrire le nombre d'éléments non nuls
-    fprintf(file, "%d\n", coo.nnz);
-
-    // Écrire les éléments de la matrice COO
-    for (int i = 0; i < coo.nnz; i++) {
-        fprintf(file, "%d %d %lf\n", coo.rows[i], coo.cols[i], coo.data[i]);
-    }
-
-    fclose(file);
-}
 
 //Libérer la mémoire allouée pour un vecteur
 void freeVector(Vector *vector) {
@@ -470,63 +449,48 @@ Vector Mat_vec_product(Matrix A, Vector B) {
 
     return result;
 }
-
-COOMatrix denseToCOO(Matrix matrix) {
-    COOMatrix coo;
-    int rows = matrix.rows;
-    int cols = matrix.cols;
-    coo.nnz = 0;
-
+COOMatrix convertToCOO(Matrix *denseMatrix) {
     // Compter le nombre d'éléments non nuls
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            if (fabs(matrice(matrix, i, j)) > 1e-10) {
-                coo.nnz++;
+    int nonZeroCount = 0;
+    for (int i = 0; i < denseMatrix->rows; i++) {
+        for (int j = 0; j < denseMatrix->cols; j++) {
+            for (int k = 0; k < denseMatrix->depth; k++) {
+                if (matrice3dp(denseMatrix, i, j, k) != 0) {
+                    nonZeroCount++;
+                }
             }
         }
     }
 
-    // Allouer de la mémoire pour les tableaux COO
-    coo.rows = (int *)malloc(coo.nnz * sizeof(int));
-    coo.cols = (int *)malloc(coo.nnz * sizeof(int));
-    coo.data = (double *)malloc(coo.nnz * sizeof(double));
+    // Allouer de la mémoire pour COOMatrix
+    COOMatrix cooMatrix;
+    cooMatrix.values = (double *)malloc(nonZeroCount * sizeof(double));
+    cooMatrix.rowsIndices = (int *)malloc(nonZeroCount * sizeof(int));
+    cooMatrix.colsIndices = (int *)malloc(nonZeroCount * sizeof(int));
+    cooMatrix.depthsIndices = (int *)malloc(nonZeroCount * sizeof(int));
+    cooMatrix.nonZeroCount = nonZeroCount;
+    cooMatrix.rows = denseMatrix->rows;
+    cooMatrix.cols = denseMatrix->cols;
+    cooMatrix.depth = denseMatrix->depth;
 
-    int nnz_index = 0;
-
-    // Remplir les tableaux COO
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            if (fabs(matrice(matrix, i, j)) > 1e-10) {
-                coo.rows[nnz_index] = i;
-                coo.cols[nnz_index] = j;
-                coo.data[nnz_index] = matrice(matrix, i, j);
-                nnz_index++;
+    // Remplir les tableaux de COOMatrix
+    int idx = 0;
+    for (int i = 0; i < denseMatrix->rows; i++) {
+        for (int j = 0; j < denseMatrix->cols; j++) {
+            for (int k = 0; k < denseMatrix->depth; k++) {
+                double val =matrice3dp(denseMatrix, i, j, k);
+                if (val != 0) {
+                    cooMatrix.values[idx] = val;
+                    cooMatrix.rowsIndices[idx] = i;
+                    cooMatrix.colsIndices[idx] = j;
+                    cooMatrix.depthsIndices[idx] = k;
+                    idx++;
+                }
             }
         }
     }
 
-    return coo;
-}
-
-
-Matrix COOtoDense(COOMatrix coo, int rows, int cols) {
-    // Allouer la matrice dense
-    Matrix denseMatrix ;
-    denseMatrix.rows = rows;
-    denseMatrix.cols = cols;
-    denseMatrix.data = (double*)malloc(rows * cols * sizeof(double));
-
-    // Initialiser la matrice dense à zéro
-    for (int i = 0; i < rows * cols; i++) {
-        denseMatrix.data[i] = 0.0;
-    }
-
-    // Remplir la matrice dense à partir de la matrice COO
-    for (int k = 0; k < coo.nnz; k++) {
-        matrice(denseMatrix,coo.rows[k],coo.cols[k]) = coo.data[k];
-    }
-
-    return denseMatrix;
+    return cooMatrix;
 }
 
 
@@ -534,12 +498,13 @@ Matrix COOtoDense(COOMatrix coo, int rows, int cols) {
 
 
 
-Matrix reshape3D(Matrix *matrix2D, int newRows, int newCols, int newDepth) {
-    Matrix matrix3D;
-    matrix3D.rows = newRows;
-    matrix3D.cols = newCols;
-    matrix3D.depth = newDepth;
-    matrix3D.data=(double*)malloc(newRows * newCols*newDepth * sizeof(double));
+
+
+void reshape3D(Matrix *matrix2D,Matrix *matrix3D, int newRows, int newCols, int newDepth) {
+    matrix3D->rows = newRows;
+    matrix3D->cols = newCols;
+    matrix3D->depth = newDepth;
+    matrix3D->data=(double*)malloc(newRows * newCols*newDepth * sizeof(double));
     for (int i = 0; i < newRows; i++)
     {
         for (int j = 0; j < newCols; j++)
@@ -547,11 +512,87 @@ Matrix reshape3D(Matrix *matrix2D, int newRows, int newCols, int newDepth) {
             for (int k = 0; k < newDepth; k++)
             {
                 int index2D = i * newCols * newDepth + j * newDepth + k;
-                matrice3d(matrix3D,i,j,k)= matrix2D->data[index2D];
+                matrice3dp(matrix3D,i,j,k)= matrix2D->data[index2D];
 
             }
             
         }
         
+        
     }
+}
+
+
+
+
+SparseVector convertToSparseVector(Vector *vector) {
+    // Compter le nombre d'éléments non nuls
+    int nonZeroCount = 0;
+    for (int i = 0; i < vector->length; i++) {
+        if (vector->data[i] != 0) {
+            nonZeroCount++;
+        }
+    }
+
+    // Allouer de la mémoire pour les tableaux dans SparseVector
+    SparseVector sparseVector;
+    sparseVector.values = (double *)malloc(nonZeroCount * sizeof(double));
+    sparseVector.indices = (int *)malloc(nonZeroCount * sizeof(int));
+    sparseVector.nonZeroCount = nonZeroCount;
+    sparseVector.originalLength = vector->length; // Stocker la taille originale
+
+    // Remplir les tableaux values et indices
+    int j = 0;
+    for (int i = 0; i < vector->length; i++) {
+        if (vector->data[i] != 0) {
+            sparseVector.values[j] = vector->data[i];
+            sparseVector.indices[j] = i;
+            j++;
+        }
+    }
+
+    return sparseVector;
+}
+
+
+
+ListOfSparseVectors convertToListOfSparseVectors(ListOfVectors *list) {
+    // Créer un ListOfSparseVectors avec la même taille que list
+    ListOfSparseVectors sparseList;
+    sparseList.size = list->size;
+    sparseList.vectors = (SparseVector *)malloc(list->size * sizeof(SparseVector));
+
+    // Convertir chaque Vector en SparseVector
+    for (int i = 0; i < list->size; i++) {
+        sparseList.vectors[i] = convertToSparseVector(&list->vectors[i]);
+    }
+
+    return sparseList;
+}
+
+
+
+
+void copyCOOMatrixStructure(const COOMatrix *source, COOMatrix *destination) {
+    // Copier les dimensions
+    destination->rows = source->rows;
+    destination->cols = source->cols;
+    destination->depth = source->depth; // Ajoutez ceci si vous gérez la profondeur
+    destination->nonZeroCount = source->nonZeroCount;
+
+    // Allouer la mémoire pour les indices
+    destination->rowsIndices = (int *)malloc(source->nonZeroCount * sizeof(int));
+    destination->colsIndices = (int *)malloc(source->nonZeroCount * sizeof(int));
+    destination->depthsIndices = (int *)malloc(source->nonZeroCount * sizeof(int));
+    destination->values = (double *)malloc(source->nonZeroCount * sizeof(double));
+    // Vérifier l'allocation de mémoire
+    if (destination->rowsIndices == NULL || destination->colsIndices == NULL || destination->depthsIndices == NULL) {
+        // Gérer l'erreur d'allocation
+        exit(1);
+    }
+
+    // Copier les indices
+    memcpy(destination->rowsIndices, source->rowsIndices, source->nonZeroCount * sizeof(int));
+    memcpy(destination->colsIndices, source->colsIndices, source->nonZeroCount * sizeof(int));
+    memcpy(destination->depthsIndices, source->depthsIndices, source->nonZeroCount * sizeof(int));
 }
