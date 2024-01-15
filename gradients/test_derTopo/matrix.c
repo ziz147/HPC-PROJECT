@@ -586,10 +586,6 @@ void copyCOOMatrixStructure(const COOMatrix *source, COOMatrix *destination) {
     destination->depthsIndices = (int *)malloc(source->nonZeroCount * sizeof(int));
     destination->values = (double *)malloc(source->nonZeroCount * sizeof(double));
     // Vérifier l'allocation de mémoire
-    if (destination->rowsIndices == NULL || destination->colsIndices == NULL || destination->depthsIndices == NULL) {
-        // Gérer l'erreur d'allocation
-        exit(1);
-    }
 
     // Copier les indices
     memcpy(destination->rowsIndices, source->rowsIndices, source->nonZeroCount * sizeof(int));

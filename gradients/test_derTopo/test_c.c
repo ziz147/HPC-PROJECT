@@ -52,11 +52,10 @@ int main() {
     
     BF_SupportCOO.depth=1;
     free(BF_Support.data);
-    fprintf(stderr,"verif memoire");
  
     //Matrix P_rho_temp = loadMatrix("P_rho_test.dat");
     Matrix P_rho= loadMatrix("P_rho_test.dat");
-
+    // il reste a traiter le probleme des matrices 3d et ajouter le depth pour chaque matrice
    // reshape3D(&P_rho_temp, &P_rho, 28, 28, 28);
     //free(P_rho_temp.data);
 

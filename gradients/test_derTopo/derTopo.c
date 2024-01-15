@@ -111,10 +111,7 @@ void selectRowsCOO(const COOMatrix *source, const Vector *indices, COOMatrix *de
     destination->cols = source->cols;
     destination->depth = source->depth;
 
-    if (destination->values == NULL || destination->rowsIndices == NULL || destination->colsIndices == NULL || destination->depthsIndices == NULL) {
-        // Gérer l'erreur d'allocation
-        exit(1);
-    }
+    
 
     // Copier les éléments non nuls des lignes sélectionnées
     int idx = 0;
@@ -158,10 +155,7 @@ void selectColumnsCOO(const COOMatrix *source, const Vector *columnIndices, COOM
     destination->cols = columnIndices->length;
     destination->depth = source->depth;
 
-    if (destination->values == NULL || destination->rowsIndices == NULL || destination->colsIndices == NULL || destination->depthsIndices == NULL) {
-        // Gérer l'erreur d'allocation
-        exit(1);
-    }
+
 
     // Copier les éléments non nuls des colonnes sélectionnées
     int idx = 0;
@@ -226,12 +220,15 @@ void matrixVectorMultiplicationCOO(const COOMatrix *A, const Vector *B, Vector *
     }
 
     // Effectuer la multiplication matrice-vecteur pour les éléments non nuls
-    for (int i = 0; i < A->rows; i++) {
-        for (int j = 0; j < A->cols; j++) {
-            double value = GET_COO_VALUE(*A, i, j); // Supposant que depthIdx est toujours 0 pour une matrice 2D
-            C->data[i] += value * B->data[j];
-        }
+    for (int i = 0; i < A->nonZeroCount; i++) {
+        int row = A->rowsIndices[i];
+        int col = A->colsIndices[i];
+        double value = A->values[i];
+
+        // Ajouter la contribution de cet élément au produit matrice-vecteur
+        C->data[row] += value * B->data[col];
     }
+    
 }
 
 
@@ -327,8 +324,9 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
             fprintf(stderr, " ERREUR ALLOCATION \n");
             exit(1);
         }
-        
+        fprintf(stderr, " Check Point 2 \n");
         matrixVectorMultiplicationCOO(&BF_support, &W_S_temp, &S_w_temp);
+        fprintf(stderr, " Check Point 3 \n");
      //   matrixVectorMultiplication(&BF_support, &W_S_temp, &S_w_temp);
         free(W_S_temp.data); 
         S_w.length=BF_mask->length;
@@ -344,6 +342,7 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
 
             
         }
+        fprintf(stderr, " Check Point 4 \n");
         free(S_w_temp.data);
         // der_CP = Nij_w/S_w
         fprintf(stderr, " Check Point \n");
