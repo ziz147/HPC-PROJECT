@@ -454,10 +454,10 @@ COOMatrix convertToCOO(Matrix *denseMatrix) {
     int nonZeroCount = 0;
     for (int i = 0; i < denseMatrix->rows; i++) {
         for (int j = 0; j < denseMatrix->cols; j++) {
-            for (int k = 0; k < denseMatrix->depth; k++) {
-                if (matrice3dp(denseMatrix, i, j, k) != 0) {
+            
+                if (matricep(denseMatrix, i, j) != 0) {
                     nonZeroCount++;
-                }
+                
             }
         }
     }
@@ -477,15 +477,15 @@ COOMatrix convertToCOO(Matrix *denseMatrix) {
     int idx = 0;
     for (int i = 0; i < denseMatrix->rows; i++) {
         for (int j = 0; j < denseMatrix->cols; j++) {
-            for (int k = 0; k < denseMatrix->depth; k++) {
-                double val =matrice3dp(denseMatrix, i, j, k);
+            
+                double val =matricep(denseMatrix, i, j);
                 if (val != 0) {
                     cooMatrix.values[idx] = val;
                     cooMatrix.rowsIndices[idx] = i;
                     cooMatrix.colsIndices[idx] = j;
-                    cooMatrix.depthsIndices[idx] = k;
+                    cooMatrix.depthsIndices[idx] = 0;
                     idx++;
-                }
+                
             }
         }
     }

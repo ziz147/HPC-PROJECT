@@ -191,11 +191,6 @@ void extractElementsAndReshape(const Matrix *W, const Matrix *indices, Vector *o
     output->length = indices->rows;
     output->data = (double *)malloc(output->length * sizeof(double));
 
-    if (output->data == NULL) {
-        // Gérer l'erreur d'allocation
-        exit(1);
-    }
-
     for (int i = 0; i < indices->rows; i++) {
         int rowIndex = (int)matricep(indices,i,0);    // Première colonne d'IND_mask
         int colIndex = (int)matricep(indices,i,1); // Deuxième colonne d'IND_mask
@@ -399,7 +394,7 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
         der_W->rows= Nij_P.rows;
         der_W->depth= Nij_P.depth;
         int maxind=(Nij_P.nonZeroCount+Nij_nurbs.nonZeroCount);
-
+        fprintf(stderr,"maax: %d  \n",maxind );
         der_W->rowsIndices= (int *)malloc( maxind* sizeof(int));
 
         der_W->colsIndices= (int *)malloc( maxind* sizeof(int));

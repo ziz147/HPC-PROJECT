@@ -43,26 +43,26 @@ int main() {
     free(U1.data);
     free(U2.data);
     free(U3.data);
+
+
+
+
     COOMatrix BF_SupportCOO;
     BF_SupportCOO = convertToCOO(&BF_Support);  
-    fprintf(stderr,"depth: %d",BF_SupportCOO.depth);
+    
     BF_SupportCOO.depth=1;
     free(BF_Support.data);
     fprintf(stderr,"verif memoire");
  
     //Matrix P_rho_temp = loadMatrix("P_rho_test.dat");
     Matrix P_rho= loadMatrix("P_rho_test.dat");
-    P_rho.cols=28;
-    P_rho.rows=28;
-    P_rho.depth=28;
+
    // reshape3D(&P_rho_temp, &P_rho, 28, 28, 28);
     //free(P_rho_temp.data);
 
    // Matrix W_temp = loadMatrix("W_test.dat");
     Matrix W= loadMatrix("W_test.dat");
-    W.cols=28;
-    W.rows=28;
-    W.depth=28;
+
     //reshape3D(&W_temp,&W, 28, 28, 28);
    // saveMatrix(W,"der_CP_c.txt");
    // free(W_temp.data);
@@ -74,6 +74,8 @@ int main() {
     COOMatrix der_W;
     fprintf(stderr, " der nurbs \n");
     der_NURBS(local_Support ,BF_SupportCOO ,IND_mask_active , IND_mask, IND_mask_tot ,rho_e, P_rho , W, 2, &der_CP, &der_W, &BF_mask);
+    
+    
     fprintf(stderr, " NURBS OK \n");
     saveVector(BF_mask, "BF_mask_c.txt");
     saveMatrix(der_CP,"der_CP_c.txt");
