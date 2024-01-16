@@ -130,4 +130,5 @@ SparseVector convertToSparseVector(Vector *vector);
 ListOfSparseVectors convertToListOfSparseVectors(ListOfVectors *list);
 void copyCOOMatrixStructure(const COOMatrix *source, COOMatrix *destination);
 void freeCOOMatrix(COOMatrix *matrix);
+void hadamardVectorProductCOO2(const COOMatrix *P, const Vector *w, COOMatrix *p_w,Vector max);
 #endif

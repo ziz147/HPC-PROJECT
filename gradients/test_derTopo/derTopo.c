@@ -256,7 +256,7 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
   
         // Vérification de l'allocation réussie
         if (local_support_flat.data == NULL) {
-            // Gestion de l'erreur d'allocation
+            fprintf(stderr, " ERREUR ALLOCATION \n");
             exit(1);
         }
         // Applatir local_support en un vecteur 
@@ -276,6 +276,7 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
         /* BF_mask */ 
 
         SortElements(&local_support_flat, BF_mask);
+       // saveVector(*BF_mask, "BF_mask_c.txt");
         free(local_support_flat.data); 
         local_support_flat.data=NULL;
         /* BF_support_temp */
@@ -289,6 +290,7 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
         COOMatrix BF_support_temp;
         selectColumnsCOO(&BF_support_rows_selected, &IND_mask_active, &BF_support_temp);
         freeCOOMatrix(&BF_support_rows_selected);
+        
         //selectColumns(&BF_support_rows_selected, &IND_mask_active, &BF_support_temp);
        // free(BF_support_rows_selected.data);
         // W_temp = W[IND_mask[:,0],IND_mask[:,1]].reshape((len(IND_mask),1))
@@ -297,12 +299,9 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
         
         extractElementsAndReshape(&W, &IND_mask, &W_temp);
         // Utilisation pour W_S_temp
-        Vector W_S_temp;
-        extractElementsAndReshape(&W, &IND_mask_tot, &W_S_temp);
+        
 
-        // Utilisation pour P_temp
-        Vector P_temp;
-        extractElementsAndReshape(&P_rho, &IND_mask, &P_temp);
+        
 
         // Nij_w = BF_support_temp * W_temp.
         
@@ -321,14 +320,17 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
         Vector S_w_temp,S_w;
         S_w_temp.length=BF_support.rows;
         
-        S_w_temp.data= (double *)malloc(BF_support.rows * sizeof(double));
+        S_w_temp.data= (double *)malloc(S_w_temp.length * sizeof(double));
 
         fprintf(stderr, " Check Point 2 \n");
+        Vector W_S_temp;
+        extractElementsAndReshape(&W, &IND_mask_tot, &W_S_temp);
         matrixVectorMultiplicationCOO(&BF_support, &W_S_temp, &S_w_temp);
-        fprintf(stderr, " Check Point 3 \n");
-     //   matrixVectorMultiplication(&BF_support, &W_S_temp, &S_w_temp);
         free(W_S_temp.data);
         W_S_temp.data=NULL;
+        fprintf(stderr, " Check Point 3 \n");
+     //   matrixVectorMultiplication(&BF_support, &W_S_temp, &S_w_temp);
+        
         S_w.length=BF_mask->length;
         S_w.data= (double *)malloc(S_w.length * sizeof(double));
         for (int i = 0; i < BF_mask->length; i++) {
@@ -371,6 +373,9 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
         COOMatrix Nij_P;
         copyCOOMatrixStructure(&BF_support_temp, &Nij_P);
         fprintf(stderr, " Check Point 5 \n");
+        // Utilisation pour P_temp
+        Vector P_temp;
+        extractElementsAndReshape(&P_rho, &IND_mask, &P_temp);
         hadamardVectorProductCOO(&BF_support_temp, &P_temp, &Nij_P);
         free(P_temp.data);
         P_temp.data=NULL;
@@ -381,8 +386,7 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
 
 
         //Nij_nurbs = (BF_support_temp * rho_e[BF_mask])
-        COOMatrix Nij_nurbs;
-        copyCOOMatrixStructure(&BF_support_temp, &Nij_nurbs);
+        /*
 
         Vector rho_e_masked;
         // ici a verifier
@@ -393,15 +397,22 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
         for (int i = 0; i < BF_mask->length; i++) {
             rho_e_masked.data[i] = rho_e.data[(int)BF_mask->data[i]];
         }
-        fprintf(stderr,"compar: %d et %d \n",BF_support_temp.cols,rho_e_masked.length );
-        hadamardVectorProductCOO(&BF_support_temp, &rho_e_masked, &Nij_nurbs);
+        free(rho_e_masked.data);
+        rho_e_masked.data=NULL;
+
+        */
+        COOMatrix Nij_nurbs;
+        copyCOOMatrixStructure(&BF_support_temp, &Nij_nurbs);
+        //fprintf(stderr,"compar: %d et %d \n",BF_support_temp.cols,rho_e_masked.length );
+        hadamardVectorProductCOO2(&BF_support_temp, &rho_e, &Nij_nurbs,*BF_mask);
         fprintf(stderr, " Check Point 1 \n");
         free(BF_support_temp.values);
         BF_support_temp.values =NULL;
         fprintf(stderr, " Check Point 1 \n");
-        //free(rho_e_masked.data);
-        rho_e_masked.data=NULL;
-        fprintf(stderr, " Check Point 1 \n");
+        
+
+
+        
         //free(rho_e_masked.data);
         // der_W = Nij_P/S_w - Nij_nurbs/S_w
         
@@ -467,8 +478,8 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
            // der_W->depthsIndices[i] = 0;
     }
         fprintf(stderr, "OUUUF\n");
-
-                   
+       
+        
                 
                            
      //   free(S_w.data);               
