@@ -2,7 +2,7 @@
 #define DER_TOPO_H
 
 #include "matrix.h"  // Assuming you have a separate header for matrix operations
-
+#include <math.h>
 // Function Prototypes
 
 Matrix der_BSPLINE(Vector IND_mask_active, Matrix BF_support);

@@ -52,7 +52,7 @@ int main() {
     
     BF_SupportCOO.depth=1;
     free(BF_Support.data);
- 
+    BF_Support.data=NULL;
     //Matrix P_rho_temp = loadMatrix("P_rho_test.dat");
     Matrix P_rho= loadMatrix("P_rho_test.dat");
     // il reste a traiter le probleme des matrices 3d et ajouter le depth pour chaque matrice
@@ -72,6 +72,10 @@ int main() {
     Vector BF_mask;
     COOMatrix der_W;
     fprintf(stderr, " der nurbs \n");
+    int maxind=562800;
+    der_W.rowsIndices= (int *)malloc( maxind*sizeof(int));
+    der_W.colsIndices= (int *)malloc( maxind* sizeof(int));
+    der_W.values= (double *)malloc( maxind* sizeof(double));
     der_NURBS(local_Support ,BF_SupportCOO ,IND_mask_active , IND_mask, IND_mask_tot ,rho_e, P_rho , W, 2, &der_CP, &der_W, &BF_mask);
     
     

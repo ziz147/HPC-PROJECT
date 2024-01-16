@@ -129,5 +129,5 @@ void reshape3D(Matrix *matrix2D,Matrix *matrix3D, int newRows, int newCols, int 
 SparseVector convertToSparseVector(Vector *vector);
 ListOfSparseVectors convertToListOfSparseVectors(ListOfVectors *list);
 void copyCOOMatrixStructure(const COOMatrix *source, COOMatrix *destination);
-
+void freeCOOMatrix(COOMatrix *matrix);
 #endif

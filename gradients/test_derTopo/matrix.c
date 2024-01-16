@@ -211,7 +211,7 @@ void hadamardVectorProductCOO(const COOMatrix *P, const Vector *w, COOMatrix *p_
     }
 
     // Copier les dimensions et les indices de la matrice originale
-    *p_w = *P; // Copie superficielle pour conserver les indices et dimensions
+   // *p_w = *P; // Copie superficielle pour conserver les indices et dimensions
 
     // Effectuer la multiplication Hadamard sur les éléments non nuls
     for (int i = 0; i < P->nonZeroCount; i++) {
@@ -467,7 +467,7 @@ COOMatrix convertToCOO(Matrix *denseMatrix) {
     cooMatrix.values = (double *)malloc(nonZeroCount * sizeof(double));
     cooMatrix.rowsIndices = (int *)malloc(nonZeroCount * sizeof(int));
     cooMatrix.colsIndices = (int *)malloc(nonZeroCount * sizeof(int));
-    cooMatrix.depthsIndices = (int *)malloc(nonZeroCount * sizeof(int));
+  //  cooMatrix.depthsIndices = (int *)malloc(nonZeroCount * sizeof(int));
     cooMatrix.nonZeroCount = nonZeroCount;
     cooMatrix.rows = denseMatrix->rows;
     cooMatrix.cols = denseMatrix->cols;
@@ -483,7 +483,7 @@ COOMatrix convertToCOO(Matrix *denseMatrix) {
                     cooMatrix.values[idx] = val;
                     cooMatrix.rowsIndices[idx] = i;
                     cooMatrix.colsIndices[idx] = j;
-                    cooMatrix.depthsIndices[idx] = 0;
+                   // cooMatrix.depthsIndices[idx] = 0;
                     idx++;
                 
             }
@@ -583,12 +583,51 @@ void copyCOOMatrixStructure(const COOMatrix *source, COOMatrix *destination) {
     // Allouer la mémoire pour les indices
     destination->rowsIndices = (int *)malloc(source->nonZeroCount * sizeof(int));
     destination->colsIndices = (int *)malloc(source->nonZeroCount * sizeof(int));
-    destination->depthsIndices = (int *)malloc(source->nonZeroCount * sizeof(int));
+   // destination->depthsIndices = (int *)malloc(source->nonZeroCount * sizeof(int));
     destination->values = (double *)malloc(source->nonZeroCount * sizeof(double));
     // Vérifier l'allocation de mémoire
 
     // Copier les indices
     memcpy(destination->rowsIndices, source->rowsIndices, source->nonZeroCount * sizeof(int));
     memcpy(destination->colsIndices, source->colsIndices, source->nonZeroCount * sizeof(int));
-    memcpy(destination->depthsIndices, source->depthsIndices, source->nonZeroCount * sizeof(int));
+  //  memcpy(destination->depthsIndices, source->depthsIndices, source->nonZeroCount * sizeof(int));
+}
+
+
+
+
+
+
+void freeCOOMatrix(COOMatrix *matrix) {
+    if (matrix != NULL) {
+        // Libérer le tableau des valeurs non nulles
+        if (matrix->values != NULL) {
+            free(matrix->values);
+            matrix->values = NULL;
+        }
+
+        // Libérer le tableau des indices de ligne
+        if (matrix->rowsIndices != NULL) {
+            free(matrix->rowsIndices);
+            matrix->rowsIndices = NULL;
+        }
+
+        // Libérer le tableau des indices de colonne
+        if (matrix->colsIndices != NULL) {
+            free(matrix->colsIndices);
+            matrix->colsIndices = NULL;
+        }
+
+        // Libérer le tableau des indices de profondeur
+       // if (matrix->depthsIndices != NULL) {
+        //    free(matrix->depthsIndices);
+        //    matrix->depthsIndices = NULL;
+       // }
+
+        // Réinitialiser les autres champs de la structure
+        matrix->nonZeroCount = 0;
+        matrix->rows = 0;
+        matrix->cols = 0;
+        matrix->depth = 0;
+    }
 }

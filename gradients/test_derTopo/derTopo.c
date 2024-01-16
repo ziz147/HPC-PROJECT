@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 int compare(const void *a, const void *b) {
     double val1 = *(const double *)a;
     double val2 = *(const double *)b;
@@ -105,7 +106,7 @@ void selectRowsCOO(const COOMatrix *source, const Vector *indices, COOMatrix *de
     destination->values = (double *)malloc(nonZeroCount * sizeof(double));
     destination->rowsIndices = (int *)malloc(nonZeroCount * sizeof(int));
     destination->colsIndices = (int *)malloc(nonZeroCount * sizeof(int));
-    destination->depthsIndices = (int *)malloc(nonZeroCount * sizeof(int));
+    //destination->depthsIndices = (int *)malloc(nonZeroCount * sizeof(int));
     destination->nonZeroCount = nonZeroCount;
     destination->rows = indices->length;
     destination->cols = source->cols;
@@ -121,7 +122,7 @@ void selectRowsCOO(const COOMatrix *source, const Vector *indices, COOMatrix *de
                 destination->values[idx] = source->values[i];
                 destination->rowsIndices[idx] = source->rowsIndices[i];
                 destination->colsIndices[idx] = source->colsIndices[i];
-            destination->depthsIndices[idx] = source->depthsIndices[i];
+           // destination->depthsIndices[idx] = source->depthsIndices[i];
             idx++;
             break;
         }
@@ -149,7 +150,7 @@ void selectColumnsCOO(const COOMatrix *source, const Vector *columnIndices, COOM
     destination->values = (double *)malloc(nonZeroCount * sizeof(double));
     destination->rowsIndices = (int *)malloc(nonZeroCount * sizeof(int));
     destination->colsIndices = (int *)malloc(nonZeroCount * sizeof(int));
-    destination->depthsIndices = (int *)malloc(nonZeroCount * sizeof(int));
+   // destination->depthsIndices = (int *)malloc(nonZeroCount * sizeof(int));
     destination->nonZeroCount = nonZeroCount;
     destination->rows = source->rows;
     destination->cols = columnIndices->length;
@@ -165,7 +166,7 @@ void selectColumnsCOO(const COOMatrix *source, const Vector *columnIndices, COOM
                 destination->values[idx] = source->values[i];
                 destination->rowsIndices[idx] = source->rowsIndices[i];
                 destination->colsIndices[idx] = source->colsIndices[i];
-                destination->depthsIndices[idx] = source->depthsIndices[i];
+               // destination->depthsIndices[idx] = source->depthsIndices[i];
                 idx++;
                 break;
             }
@@ -234,7 +235,7 @@ void matrixVectorMultiplicationCOO(const COOMatrix *A, const Vector *B, Vector *
 
 
 
-void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_mask_active , Matrix IND_mask, Matrix IND_mask_tot ,Vector rho_e, Matrix P_rho , Matrix W, int DIM, Matrix* der_CP, COOMatrix* der_W, Vector* BF_mask){
+void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_mask_active , Matrix IND_mask, Matrix IND_mask_tot ,Vector rho_e, Matrix P_rho , Matrix W, int DIM, Matrix* der_CP, COOMatrix *der_W, Vector* BF_mask){
     
     if (DIM == 2){
 
@@ -276,7 +277,7 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
 
         SortElements(&local_support_flat, BF_mask);
         free(local_support_flat.data); 
-
+        local_support_flat.data=NULL;
         /* BF_support_temp */
         // BF_support_temp = BF_support[BF_mask,:] on a créer la fonction selectRows
         
@@ -284,10 +285,10 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
 
         //selectRows(&BF_support, BF_mask, &BF_support_rows_selected);
         selectRowsCOO(&BF_support, BF_mask, &BF_support_rows_selected);
-
+        
         COOMatrix BF_support_temp;
         selectColumnsCOO(&BF_support_rows_selected, &IND_mask_active, &BF_support_temp);
-
+        freeCOOMatrix(&BF_support_rows_selected);
         //selectColumns(&BF_support_rows_selected, &IND_mask_active, &BF_support_temp);
        // free(BF_support_rows_selected.data);
         // W_temp = W[IND_mask[:,0],IND_mask[:,1]].reshape((len(IND_mask),1))
@@ -313,6 +314,7 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
         hadamardVectorProductCOO(&BF_support_temp, &W_temp, &Nij_w);
         fprintf(stderr, " Check Point \n");
         free(W_temp.data); 
+        W_temp.data=NULL;
         //S_w = (BF_support.dot(W_S_temp))[BF_mask]
 
 
@@ -320,15 +322,13 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
         S_w_temp.length=BF_support.rows;
         
         S_w_temp.data= (double *)malloc(BF_support.rows * sizeof(double));
-        if (local_support_flat.data == NULL) {
-            fprintf(stderr, " ERREUR ALLOCATION \n");
-            exit(1);
-        }
+
         fprintf(stderr, " Check Point 2 \n");
         matrixVectorMultiplicationCOO(&BF_support, &W_S_temp, &S_w_temp);
         fprintf(stderr, " Check Point 3 \n");
      //   matrixVectorMultiplication(&BF_support, &W_S_temp, &S_w_temp);
-        free(W_S_temp.data); 
+        free(W_S_temp.data);
+        W_S_temp.data=NULL;
         S_w.length=BF_mask->length;
         S_w.data= (double *)malloc(S_w.length * sizeof(double));
         for (int i = 0; i < BF_mask->length; i++) {
@@ -344,26 +344,36 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
         }
         fprintf(stderr, " Check Point 4 \n");
         free(S_w_temp.data);
+        S_w_temp.data=NULL;
         // der_CP = Nij_w/S_w
-        fprintf(stderr, " Check Point \n");
+        
         der_CP->rows=Nij_w.rows;
         der_CP->cols=Nij_w.cols;
         der_CP->data = (double *)malloc(Nij_w.rows * Nij_w.cols * sizeof(double));
+
+        // a coriger
         
-        
-        for (int i = 0; i < Nij_w.rows; i++) {
-            for (int j = 0; j < Nij_w.cols; j++) {
-                der_CP->data[i * der_CP->cols + j] = GET_COO_VALUE(Nij_w, i, j) / S_w.data[i];
-            }
+        for (int i = 0; i < Nij_w.rows * Nij_w.cols; i++) {
+            der_CP->data[i] = 0.0;
         }
-        free(Nij_w.values); /// a crér une fonction freeCOO
+        
+        for (int i = 0; i < Nij_w.nonZeroCount; i++) {
+            int row = Nij_w.rowsIndices[i];
+            int col = Nij_w.colsIndices[i];
+            double value = Nij_w.values[i];
+
+            der_CP->data[row * der_CP->cols + col] = value / S_w.data[row];
+        }
+        //
+        freeCOOMatrix(&Nij_w); /// a crér une fonction freeCOO
                                                                
         //Nij_P = (BF_support_temp * P_temp.T)
         COOMatrix Nij_P;
         copyCOOMatrixStructure(&BF_support_temp, &Nij_P);
-        
+        fprintf(stderr, " Check Point 5 \n");
         hadamardVectorProductCOO(&BF_support_temp, &P_temp, &Nij_P);
         free(P_temp.data);
+        P_temp.data=NULL;
         fprintf(stderr, " Check Point \n");
         
 
@@ -385,47 +395,77 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
         }
         fprintf(stderr,"compar: %d et %d \n",BF_support_temp.cols,rho_e_masked.length );
         hadamardVectorProductCOO(&BF_support_temp, &rho_e_masked, &Nij_nurbs);
-        
+        fprintf(stderr, " Check Point 1 \n");
+        free(BF_support_temp.values);
+        BF_support_temp.values =NULL;
+        fprintf(stderr, " Check Point 1 \n");
+        //free(rho_e_masked.data);
+        rho_e_masked.data=NULL;
+        fprintf(stderr, " Check Point 1 \n");
         //free(rho_e_masked.data);
         // der_W = Nij_P/S_w - Nij_nurbs/S_w
-
+        
         der_W->cols= Nij_P.cols;
         der_W->rows= Nij_P.rows;
         der_W->depth= Nij_P.depth;
-        int maxind=(Nij_P.nonZeroCount+Nij_nurbs.nonZeroCount);
+        int maxind=(int)fmin(Nij_P.nonZeroCount,Nij_nurbs.nonZeroCount);
         fprintf(stderr,"maax: %d  \n",maxind );
-        der_W->rowsIndices= (int *)malloc( maxind* sizeof(int));
-
-        der_W->colsIndices= (int *)malloc( maxind* sizeof(int));
-
+      //  der_W->rowsIndices= (int *)malloc( maxind* sizeof(int));
+        fprintf(stderr, " Check Point 1 \n");
+      //  der_W->colsIndices= (int *)calloc( maxind, sizeof(int));
+        fprintf(stderr, " Check Point 2 \n");
         //der_W->depthsIndices= (int *)malloc( maxind* sizeof(int));
-        der_W->values= (double *)malloc( maxind* sizeof(double));
-    
-        int count = 0;  // Un compteur pour les éléments ajoutés à der_W
-
-        for (int i = 0; i < der_W->rows; i++) {
+     //   der_W->values= (double *)calloc( maxind, sizeof(double));
+        fprintf(stderr, " Check Point 3 \n");
+       /* Matrix passage;
+       passage.rows=der_W->rows;
+        passage.cols=der_W->cols;
+        passage.data=(double *)malloc( passage.cols*passage.rows* sizeof(double));
+        
+        for (int i = 0; i <passage.cols*passage.rows; i++) {
+            passage.data[i]=0.0;
             
-            for (int j = 0; j < der_W->cols; j++) {
+        }
+        for (int i = 0; i < Nij_P.nonZeroCount; i++) {
+            int row = Nij_P.rowsIndices[i];
+            int col = Nij_P.colsIndices[i];
+            double value = Nij_P.values[i];
+
+            passage.data[row * passage.cols + col] += value / S_w.data[row];
+        }
+       for (int i = 0; i < Nij_nurbs.nonZeroCount; i++) {
+            int row = Nij_nurbs.rowsIndices[i];
+            int col = Nij_nurbs.colsIndices[i];
+            double value = Nij_nurbs.values[i];
+
+            passage.data[row * passage.cols + col] -= value / S_w.data[row];
+        }
+        int idx = 0;
+        for (int i = 0; i < passage.rows; i++) {
+            for (int j = 0; j < passage.cols; j++) {
                 
-            double result =0;
-            result=(GET_COO_VALUE(Nij_P,i,j) - GET_COO_VALUE(Nij_nurbs,i,j));
-
-            // Ajouter le résultat à der_W si non nul
-            if (result != 0) {
-                // Assurez-vous qu'il y a suffisamment d'espace dans der_W
-                
-                der_W->rowsIndices[count] = i;
-                der_W->colsIndices[count] = j;
-                der_W->values[count] = result/ S_w.data[i];
-
-                count++;
-
+                    double val =matrice(passage, i, j);
+                    if (val != 0) {
+                        der_W->values[idx] = val;
+                        der_W->rowsIndices[idx] = i;
+                        der_W->colsIndices[idx] = j;
+                        der_W->depthsIndices[idx] = 0;
+                        idx++;
+                    
+                }
             }
-            
         }
-        }
-
-
+        
+*/
+    for (int i = 0; i < maxind; i++) {
+            int row = Nij_nurbs.rowsIndices[i];
+            int col = Nij_nurbs.colsIndices[i];
+            double value =(Nij_P.values[i]-Nij_nurbs.values[i])/ S_w.data[row];
+            der_W->values[i] = value;
+            der_W->rowsIndices[i] = row;
+            der_W->colsIndices[i] = col;
+           // der_W->depthsIndices[i] = 0;
+    }
         fprintf(stderr, "OUUUF\n");
 
                    

@@ -13,7 +13,7 @@ libsurface.a: $(OBJECTS)
 	ar rcs $@ $^
 
 main: test_c.c libsurface.a
-	$(CC) $(CFLAGS) $< -o $@ -L. -lsurface
+	$(CC) $(CFLAGS) $< -o $@ -L. -lsurface -lm
 
 clean:
 	rm -f *.o *.a main
