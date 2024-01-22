@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "matrix.h"
+#include "derTopo.h"
 
 //Ces variables sont contenus dans Problem_Setting.py. Je vais les adapter après
 double *c_vec; //Variable globale
@@ -328,6 +329,65 @@ void compliance_grad_c(Vector rho_e, Matrix ELEMENTS,const char* flag_scale, Vec
 					}
 					fclose(fid);
 				}
+			}
+		}
+
+		int DIM, NURBS;
+		if( DIM == 2)
+		{
+			if(NURBS == 1)
+			{
+				if (strcmp(flag_scale, "micro_macro") == 0 || strcmp(flag_scale, "micro") == 0)
+				{
+					// 1 - Derivatives of topology descriptor
+					Matrix der_CP, COOMatrix der_W, Vector BF_mask;
+					der_NURBS(local_support,BF_support,IND_mask_active,IND_mask,IND_mask_tot,P_rho,W,rho_e);
+
+					// 2 - Derivatives of Stiffness Matrix coefficients (anisotropic, orthotropic)
+					Matrix grad_C_coef_cp[size_grad_C][size(IND_mask)], grad_C_coef_w[size_grad_C][size(IND_mask)];
+					mzero(grad_C_coef_cp);
+					mzero(grad_C_coef_w);
+
+					for (int a=0; a < 3; a++)
+					{
+						for (int i = 0; i < taille_BF_mask; i++) {
+            				double c_vec_micro_temp = c_vec_micro[BF_mask[i]][a];
+            				double sum_cp = 0.0;
+            				double sum_w = 0.0;
+            				for (int j = 0; j < taille_BF_mask; j++) {
+                				sum_cp += sym_coef[j] * p_c[j] * c_vec_micro_temp * der_CP[j] / (a1 * a2 * rho_e[BF_mask[j]]);
+                				sum_w += sym_coef[j] * p_c[j] * c_vec_micro_temp * der_W[j] / (a1 * a2 * rho_e[BF_mask[j]]);
+            				}
+            				grad_C_coef_cp[a][i] = sum_cp;
+            				grad_C_coef_w[a][i] = sum_w;
+        				}	
+					}
+					int cont = 1;
+					for (int i = 0; i < i_range_end; i++) {
+						for (int j = i + 1; j < j_range_end; j++) {
+							for (int k = 0; k < TAILLE_BF_MASK; k++) {
+								double comp_temp = c_vec_micro[a + cont][BF_mask[k]] - c_vec_micro[i][BF_mask[k]] - c_vec_micro[j][BF_mask[k]];
+								double sum_cp = 0.0;
+								double sum_w = 0.0;
+								for (int l = 0; l < TAILLE_BF_MASK; l++) {
+									sum_cp += sym_coef[l] * p_c[l] * comp_temp * der_CP[l] / (2 * a1 * a2 * rho_e[BF_mask[l]]);
+									sum_w += sym_coef[l] * p_c[l] * comp_temp * der_W[l] / (2 * a1 * a2 * rho_e[BF_mask[l]]);
+								}
+								grad_C_coef_cp[a + cont][k] = sum_cp;
+								grad_C_coef_w[a + cont][k] = sum_w;
+							}
+							cont++;
+						}
+					}
+				}
+
+				// 3 - Derivatives of the Macro scale Compliance respecting to micro scale design variables 
+				if (strcmp(flag_scale, "micro") == 0 ) 
+				{
+					double rho_e_M_temp = 1;
+				}
+
+
 			}
 		}
 
