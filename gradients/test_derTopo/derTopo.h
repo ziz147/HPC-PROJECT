@@ -7,7 +7,7 @@
 
 Matrix der_BSPLINE(Vector IND_mask_active, Matrix BF_support);
 void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_mask_active , Matrix IND_mask, Matrix IND_mask_tot ,Vector rho_e, Matrix P_rho , Matrix W, int DIM, Matrix* der_CP, COOMatrix* der_W, Vector* BF_mask);
-
+int compare(const void *a, const void *b);
 
 
 

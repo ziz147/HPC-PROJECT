@@ -29,8 +29,8 @@ int main() {
 
     fclose(file);
     Matrix ELEMENTS = loadMatrix("ELEMENTS.dat");
-    Matrix IND_mask = loadMatrix("IND_mask.dat");
-    Matrix IND_mask_tot = loadMatrix("IND_mask_tot.dat");
+    Matrix IND_mask = loadMatrix("IND_mask_test.dat");
+    Matrix IND_mask_tot = loadMatrix("IND_mask_tot_test.dat");
     Vector U1 = loadVector("U1.dat");
     Vector U2 = loadVector("U2.dat");
     Vector U3 = loadVector("U3.dat");
@@ -44,7 +44,7 @@ int main() {
     free(U2.data);
     free(U3.data);
 
-
+    saveMatrix(BF_Support,"BF_Support_c.txt");
 
 
     COOMatrix BF_SupportCOO;
@@ -80,15 +80,15 @@ int main() {
     
     
     fprintf(stderr, " NURBS OK \n");
-    saveVector(BF_mask, "BF_mask_c.txt");
-    saveMatrix(der_CP,"der_CP_c.txt");
+    //saveVector(BF_mask, "BF_mask_c.txt");
+    //saveMatrix(der_CP,"der_CP_c.txt");
     //saveMatrix(der_W,"der_W_c.txt");
 
 
     // Libérer la mémoire
     
-    free(IND_mask.data);
-    free(IND_mask_tot.data);
+    //free(IND_mask.data);
+   // free(IND_mask_tot.data);
 
     return 0;
 }

@@ -220,6 +220,22 @@ void hadamardVectorProductCOO(const COOMatrix *P, const Vector *w, COOMatrix *p_
     }
     }
 
+void hadamardVectorProductCOO2(const COOMatrix *P, const Vector *w, COOMatrix *p_w,Vector max) {
+    // Vérifier si les dimensions sont compatibles
+    if (P->cols != w->length) {
+        printf("Erreur produit incompatible\n");
+        return;
+    }
+
+    // Copier les dimensions et les indices de la matrice originale
+   // *p_w = *P; // Copie superficielle pour conserver les indices et dimensions
+
+    // Effectuer la multiplication Hadamard sur les éléments non nuls
+    for (int i = 0; i < P->nonZeroCount; i++) {
+    int colIndex = P->colsIndices[i];
+    p_w->values[i] = P->values[i] * w->data[(int)max.data[colIndex]];
+    }
+    }
 
 
 
@@ -625,9 +641,5 @@ void freeCOOMatrix(COOMatrix *matrix) {
        // }
 
         // Réinitialiser les autres champs de la structure
-        matrix->nonZeroCount = 0;
-        matrix->rows = 0;
-        matrix->cols = 0;
-        matrix->depth = 0;
     }
 }
