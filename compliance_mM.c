@@ -169,6 +169,232 @@ double compliance_c(Vector rho_e, Matrix ELEMENTS,const char* flag_scale, Vector
 }
 }
 
+void compliance_grad_c(Vector rho_e, Matrix ELEMENTS,const char* flag_scale, Vector args1, Matrix args2,char** op_dir_parts, int* c_index, int num_parts, double c)
+{
+	FILE *fid;
+	double temp;
+
+	if (DERIVATIVES == 1)
+	{
+		if (strcmp(flag_scale, "micro_macro") == 0) 
+		{
+			rho_e_M = args1;
+			P_rho_M = args2;
+			W_M = args3;
+			ELEMENTS_macro = args4;
+            IND_mask_M = args5;
+            local_support_M = args6;
+            BF_support_M = args7;
+            IND_mask_M_tot = args8;
+            IND_mask_active_M = args9;
+		}
+		else if (strcmp(flag_scale, "micro") == 0)
+		{
+			ELEMENTS_macro = args1;
+		}
+
+	    // Reading files
+		// Calculez la longueur totale nécessaire pour la chaîne finale
+	    int total_length = 0;
+	    for (int i = 0; i < num_parts; ++i) {
+		total_length += strlen(op_dir_parts[i]);
+	    }
+
+	    // Allouez de la mémoire pour la chaîne finale
+	    char op_dir[total_length + 1];  // +1 pour le caractère nul de fin de chaîne
+	    op_dir[0] = '\0';  // Initialisez avec une chaîne vide
+
+	    // Concaténez toutes les chaînes
+	    for (int i = 0; i < num_parts; ++i) 
+		{
+			strcat(op_dir, op_dir_parts[i]);
+	    }
+
+	    // Changez le répertoire de travail
+	    if (chdir(op_dir) != 0) {
+			perror("chdir failed");
+	    }
+
+		if (strcmp(flag_scale, "micro_macro") == 0 || strcmp(flag_scale, "micro") == 0) 
+		{
+			// Reading micro strain energy
+			fid = fopen("FEM_SIMP_RES_micro.txt", "w");
+
+	    	if (fid == NULL) {
+				perror("Erreur lors de l'ouverture du fichier");
+	    	}
+	     
+		 	while (fscanf(fid, "%lf", &temp) == 1) 
+					{
+        				str_en_vec = temp;
+					}
+
+	    	c_vec_micro = 2*str_en_vec;
+	    
+    		fclose(fid);
+
+			// Reading macro strains
+			fid = fopen("STRAIN_ELEMENTS.txt", "w");
+
+	    	if (fid == NULL) {
+				perror("Erreur lors de l'ouverture du fichier");
+	    	}
+	     
+		 	while (fscanf(fid, "%lf", &temp) == 1) 
+					{
+        				strain_M = temp;
+					}
+
+	    	int* indices = malloc(ELEMENTS_macro.rows * sizeof(int));
+			for (int i = 0; i < ELEMENTS_macro.rows; i++) {
+    			indices[i] = (int)ELEMENTS_macro.values[i][0] - 1;
+			}
+
+			double* temp_values = malloc(ELEMENTS_macro.rows * sizeof(double));
+
+			for (int i = 0; i < ELEMENTS_macro.rows; i++) {
+				int index = indices[i];
+				if (index >= 0 && index < strain_M.length) {
+					temp_values[i] = strain_M.values[index];
+				} 
+			}
+
+			for (int i = 0; i < ELEMENTS_macro.rows; i++) {
+    			strain_M.values[i] = temp_values[i];
+			}
+			
+			free(indices);
+			free(temp_values);
+   
+    		fclose(fid);
+		}
+
+		else {
+			if (strcmp(flag_BCs, "mixed-w") == 0)
+			{
+				fid = fopen("C_diff_elements.txt", "w");
+
+				if (fid == NULL) {
+					perror("Erreur lors de l'ouverture du fichier");
+				}
+
+				while (fscanf(fid, "%lf", &temp) == 1) 
+					{
+        				c = temp;
+					}
+
+				fclose(fid);	     
+			}
+			else if (strcmp(flag_BCs, "mixed-c") == 0)
+			{
+				fid = fopen("C_diff_elements.txt", "w");
+
+				if (fid == NULL) {
+					perror("Erreur lors de l'ouverture du fichier");
+				}
+
+				while (fscanf(fid, "%lf", &temp) == 1) 
+					{
+        				c_vec = &temp*2;
+					}	     
+			}
+			else 
+			{
+				fid = fopen("FEM_SIMP_RES.txt", "w");
+
+				if (fid == NULL) {
+					perror("Erreur lors de l'ouverture du fichier");
+				}
+
+				while (fscanf(fid, "%lf", &temp) == 1) 
+					{
+        				c_vec = &temp*2;
+					}
+
+				fclose(fid);	     
+
+				if (strstr(con_fun, "compliance") != NULL)
+				{
+					op_dir[0] = '\0'; 
+					if (*c_index == 0) {
+						fid = fopen("FEM_SIMP_RES.txt", "r");
+					} else if (*c_index == 1) {
+						fid = fopen("FEM_SIMP_RES_mom.txt", "r");
+					}
+					while (fscanf(fid, "%lf", &temp) == 1) 
+					{
+        				c_vec = &temp*2;
+					}
+					fclose(fid);
+				}
+			}
+		}
+
+		int DIM, NURBS;
+		if( DIM == 2)
+		{
+			if(NURBS == 1)
+			{
+				if (strcmp(flag_scale, "micro_macro") == 0 || strcmp(flag_scale, "micro") == 0)
+				{
+					// 1 - Derivatives of topology descriptor
+					Matrix der_CP, COOMatrix der_W, Vector BF_mask;
+					der_NURBS(local_support,BF_support,IND_mask_active,IND_mask,IND_mask_tot,P_rho,W,rho_e);
+
+					// 2 - Derivatives of Stiffness Matrix coefficients (anisotropic, orthotropic)
+					Matrix grad_C_coef_cp[size_grad_C][size(IND_mask)], grad_C_coef_w[size_grad_C][size(IND_mask)];
+					mzero(grad_C_coef_cp);
+					mzero(grad_C_coef_w);
+
+					for (int a=0; a < 3; a++)
+					{
+						for (int i = 0; i < taille_BF_mask; i++) {
+            				double c_vec_micro_temp = c_vec_micro[BF_mask[i]][a];
+            				double sum_cp = 0.0;
+            				double sum_w = 0.0;
+            				for (int j = 0; j < taille_BF_mask; j++) {
+                				sum_cp += sym_coef[j] * p_c[j] * c_vec_micro_temp * der_CP[j] / (a1 * a2 * rho_e[BF_mask[j]]);
+                				sum_w += sym_coef[j] * p_c[j] * c_vec_micro_temp * der_W[j] / (a1 * a2 * rho_e[BF_mask[j]]);
+            				}
+            				grad_C_coef_cp[a][i] = sum_cp;
+            				grad_C_coef_w[a][i] = sum_w;
+        				}	
+					}
+					int cont = 1;
+					for (int i = 0; i < i_range_end; i++) {
+						for (int j = i + 1; j < j_range_end; j++) {
+							for (int k = 0; k < TAILLE_BF_MASK; k++) {
+								double comp_temp = c_vec_micro[a + cont][BF_mask[k]] - c_vec_micro[i][BF_mask[k]] - c_vec_micro[j][BF_mask[k]];
+								double sum_cp = 0.0;
+								double sum_w = 0.0;
+								for (int l = 0; l < TAILLE_BF_MASK; l++) {
+									sum_cp += sym_coef[l] * p_c[l] * comp_temp * der_CP[l] / (2 * a1 * a2 * rho_e[BF_mask[l]]);
+									sum_w += sym_coef[l] * p_c[l] * comp_temp * der_W[l] / (2 * a1 * a2 * rho_e[BF_mask[l]]);
+								}
+								grad_C_coef_cp[a + cont][k] = sum_cp;
+								grad_C_coef_w[a + cont][k] = sum_w;
+							}
+							cont++;
+						}
+					}
+				}
+
+				// 3 - Derivatives of the Macro scale Compliance respecting to micro scale design variables 
+				if (strcmp(flag_scale, "micro") == 0 ) 
+				{
+					double rho_e_M_temp = 1;
+				}
+
+
+			}
+		}
+
+
+
+
+
+	}
+}
 
 
 
