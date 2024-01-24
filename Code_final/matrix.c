@@ -60,8 +60,6 @@ Matrix loadMatrix(const char *filename) {
         }
     }
 
-
-
     fclose(file);
     return result;
 }
@@ -226,7 +224,6 @@ void hadamard_vector_product(const Matrix *P, const Vector *w, Matrix *p_w) {
     p_w->cols = P->cols;
 }
 
-
 //Calculer le produit Hadamard de deux matrices
 //(Ce produit a été utilisé dans la fonction Hypersurface.c)
 void hadamard_product(const Matrix *P, const Matrix *w, Matrix *p_w) {
@@ -272,12 +269,6 @@ void hadamard_product3d(Matrix P, Matrix w, Matrix *p_w) {
     p_w->cols = P.cols;
     p_w->depth = P.depth;
 }
-
-
-
-
-
-
 
 //Intialiser la taille d'une matrice 
 void definem(Matrix* M, int i, int j) {
@@ -355,7 +346,6 @@ void saveMatrix(Matrix matrix, const char *filename) {
 }
 
 //Sauvegarder la matrice en format COO dans un fichier 
-
 void saveCOO(COOMatrix coo, const char *filename) {
     FILE *file = fopen(filename, "w");
     if (file == NULL) {
@@ -526,4 +516,13 @@ Matrix COOtoDense(COOMatrix coo, int rows, int cols) {
     }
 
     return denseMatrix;
+}
+
+// Remplir la matrice avec des 1
+    void m_ones(Matrix *mat) {
+    for (int i = 0; i < mat->rows; i++) {
+        for (int j = 0; j < mat->cols; j++) {
+            matricep(mat, i, j) = 1.0;
+        }
+    }
 }
