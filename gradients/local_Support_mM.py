@@ -44,8 +44,8 @@ def local_support_fun(ELEMENTS, IND_mask, IND_mask_tot, U1, U2, U3, flag_scale):
         n3_temp = n3;
 
     if DIM == 2:
-        u1 = ELEMENTS[:, 11]
-        u2 = ELEMENTS[:, 12]
+        u1 = ELEMENTS[:, 14]
+        u2 = ELEMENTS[:, 15]
         local_Support, BF_Support, IND_mask_active = ls_2d_numba(IND_mask_tot, IND_mask, u1, u2, U1, U2, p1_temp, p2_temp, n1_temp, n2_temp)
             
     elif DIM == 3:
