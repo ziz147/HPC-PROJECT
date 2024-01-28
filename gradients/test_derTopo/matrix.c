@@ -222,11 +222,8 @@ void hadamardVectorProductCOO(const COOMatrix *P, const Vector *w, COOMatrix *p_
 
 void hadamardVectorProductCOO2(const COOMatrix *P, const Vector *w, COOMatrix *p_w,Vector max) {
     // Vérifier si les dimensions sont compatibles
-    if (P->cols != w->length) {
-        printf("Erreur produit incompatible\n");
-        return;
-    }
 
+    fprintf(stderr, " %d %d %d %d \n",P->cols,w->length, max.length,P->rows);
     // Copier les dimensions et les indices de la matrice originale
    // *p_w = *P; // Copie superficielle pour conserver les indices et dimensions
 
@@ -356,8 +353,8 @@ void saveMatrix(Matrix matrix, const char *filename) {
         return;
     }
 
-    for (int i = 0; i < matrix.rows; i++) {
-        for (int j = 0; j < matrix.cols; j++) {
+    for (int i = 0; i < 1000; i++) {
+        for (int j = 0; j < 1000; j++) {
             fprintf(file, "%lf", matrice(matrix, i, j));
             if (j < matrix.cols - 1) {
                 fprintf(file, " ");
@@ -465,6 +462,38 @@ Vector Mat_vec_product(Matrix A, Vector B) {
 
     return result;
 }
+Matrix Mat_mat_product(Matrix A, Matrix B) {
+    // Vérifier si le produit est possible
+    if (A.cols != B.rows) {
+        fprintf(stderr, "Erreur : les dimensions des matrices ne sont pas compatibles pour le produit.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Créer la matrice résultante
+    Matrix result;
+    result.rows = A.rows;
+    result.cols = B.cols;
+    result.depth = 0;  // Supposant que depth n'est pas utilisé pour cette opération
+    result.data = (double *)malloc(result.rows * result.cols * sizeof(double));
+
+    if (result.data == NULL) {
+        fprintf(stderr, "Erreur d'allocation mémoire\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Calcul du produit
+    for (int i = 0; i < result.rows; i++) {
+        for (int j = 0; j < result.cols; j++) {
+            result.data[i * result.cols + j] = 0.0;
+            for (int k = 0; k < A.cols; k++) {
+                result.data[i * result.cols + j] += A.data[i * A.cols + k] * B.data[k * B.cols + j];
+            }
+        }
+    }
+
+    return result;
+}
+
 COOMatrix convertToCOO(Matrix *denseMatrix) {
     // Compter le nombre d'éléments non nuls
     int nonZeroCount = 0;
@@ -509,7 +538,36 @@ COOMatrix convertToCOO(Matrix *denseMatrix) {
     return cooMatrix;
 }
 
+Matrix convertToDense(COOMatrix *cooMatrix) {
+    // Créer et initialiser la matrice dense
+    Matrix denseMatrix;
+    denseMatrix.rows = cooMatrix->rows;
+    denseMatrix.cols = cooMatrix->cols;
+    denseMatrix.depth = cooMatrix->depth;  // Assumant que depth est utilisé de la même manière
+    denseMatrix.data = (double *)malloc(denseMatrix.rows * denseMatrix.cols * sizeof(double));
 
+    if (denseMatrix.data == NULL) {
+        fprintf(stderr, "Erreur d'allocation mémoire\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Initialiser tous les éléments de denseMatrix à 0
+    for (int i = 0; i < denseMatrix.rows; i++) {
+        for (int j = 0; j < denseMatrix.cols; j++) {
+            denseMatrix.data[i * denseMatrix.cols + j] = 0.0;
+        }
+    }
+
+    // Remplir les éléments non nuls
+    for (int idx = 0; idx < cooMatrix->nonZeroCount; idx++) {
+        int row = cooMatrix->rowsIndices[idx];
+        int col = cooMatrix->colsIndices[idx];
+        double val = cooMatrix->values[idx];
+        denseMatrix.data[row * denseMatrix.cols + col] = val;
+    }
+
+    return denseMatrix;
+}
 
 
 
@@ -643,3 +701,61 @@ void freeCOOMatrix(COOMatrix *matrix) {
         // Réinitialiser les autres champs de la structure
     }
 }
+
+
+
+void saveCOOMatrix(const COOMatrix *matrix, const char *filename) {
+    FILE *file = fopen(filename, "w");
+    if (file == NULL) {
+        perror("Erreur lors de l'ouverture du fichier");
+        return;
+    }
+
+    // Écriture du nombre d'éléments non nuls et des dimensions
+    fprintf(file, "%d %d %d %d\n", matrix->rows, matrix->cols, matrix->depth, matrix->nonZeroCount);
+
+    // Écriture des valeurs non nulles et de leurs indices
+    for (int i = 0; i < matrix->nonZeroCount; i++) {
+        fprintf(file, "%d %d %lf\n", matrix->rowsIndices[i], matrix->colsIndices[i], matrix->values[i]);
+    }
+
+    fclose(file);
+}
+
+
+
+
+
+void addValueToCOOMatrix(COOMatrix *matrix, int row, int col, double value) {
+    // Réallocation si nonZeroCount est un multiple de 1000
+    if (matrix->nonZeroCount % 1000 == 999) {
+        int newCapacity = matrix->nonZeroCount + 1001; // Ajouter de l'espace pour 1000 nouveaux éléments
+
+        // Réallouez chaque tableau
+        double *newData = (double *)realloc(matrix->values, newCapacity * sizeof(double));
+        int *newRow = (int *)realloc(matrix->rowsIndices, newCapacity * sizeof(int));
+        int *newCol = (int *)realloc(matrix->colsIndices, newCapacity * sizeof(int));
+
+        if (!newData || !newRow || !newCol) {
+            perror("Erreur de réallocation de mémoire");
+            free(newData); // libérez la nouvelle mémoire si une des réallocations échoue
+            free(newRow);
+            free(newCol);
+            // Gérer l'erreur de manière appropriée
+            return;
+        }
+
+        // Mettre à jour les pointeurs si la réallocation a réussi
+        matrix->values = newData;
+        matrix->rowsIndices = newRow;
+        matrix->colsIndices = newCol;
+    }
+
+    // Ajouter la nouvelle valeur
+    matrix->values[matrix->nonZeroCount] = value;
+    matrix->rowsIndices[matrix->nonZeroCount] = row;
+    matrix->colsIndices[matrix->nonZeroCount] = col;
+    matrix->nonZeroCount++;
+}
+
+

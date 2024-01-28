@@ -103,7 +103,8 @@ typedef struct {
 
 Matrix loadMatrix(const char *filename);
 Vector loadVector(const char *filename);
-COOMatrix loadCOO(const char *filename);
+void saveCOOMatrix(const COOMatrix *matrix, const char *filename);
+COOMatrix *loadCOOMatrix(const char *filename);
 void printVector(Vector vector);
 void printMatrix(const Matrix matrix);
 Vector col(const Matrix matrix, int i);
@@ -123,7 +124,9 @@ void saveListOfVectors( ListOfVectors listOfVectors, const char *filename);
 Matrix col3d(const Matrix matrix, int j);
 void freeListOfVectors(ListOfVectors *list);
 Vector Mat_vec_product(Matrix A, Vector B);
+Matrix Mat_mat_product(Matrix A, Matrix B);
 COOMatrix convertToCOO(Matrix *denseMatrix);
+Matrix convertToDense(COOMatrix *cooMatrix);
 void hadamardVectorProductCOO(const COOMatrix *P, const Vector *w, COOMatrix *p_w);
 void reshape3D(Matrix *matrix2D,Matrix *matrix3D, int newRows, int newCols, int newDepth);
 SparseVector convertToSparseVector(Vector *vector);
@@ -131,4 +134,5 @@ ListOfSparseVectors convertToListOfSparseVectors(ListOfVectors *list);
 void copyCOOMatrixStructure(const COOMatrix *source, COOMatrix *destination);
 void freeCOOMatrix(COOMatrix *matrix);
 void hadamardVectorProductCOO2(const COOMatrix *P, const Vector *w, COOMatrix *p_w,Vector max);
+void addValueToCOOMatrix(COOMatrix *matrix, int row, int col, double value);
 #endif

@@ -5,12 +5,80 @@
 #include <string.h>
 
 
+
+unsigned int hash(double value) {
+    // Basic hash function for demonstration
+    return (unsigned int)(value * 1000) % HASH_TABLE_SIZE;
+}
+
+Node* createNode(double data) {
+    Node *newNode = (Node *)malloc(sizeof(Node));
+    if (newNode == NULL) {
+        exit(1);  // Handle memory allocation failure
+    }
+    newNode->data = data;
+    newNode->next = NULL;
+    return newNode;
+}
+void deleteNode(HashTable *table, double data) {
+    unsigned int index = hash(data);
+    Node *current = table->buckets[index];
+    Node *previous = NULL;
+
+    while (current != NULL) {
+        if (current->data == data) {
+            if (previous == NULL) {
+                // Le nœud à supprimer est le premier de la liste
+                table->buckets[index] = current->next;
+            } else {
+                // Le nœud à supprimer n'est pas le premier
+                previous->next = current->next;
+            }
+            free(current);
+            break;
+        }
+        previous = current;
+        current = current->next;
+    }
+}
+void insertHashTable(HashTable *table, double data) {
+    unsigned int index = hash(data);
+    Node *newNode = createNode(data);
+
+    // Insert at the beginning of the list to handle collision
+    newNode->next = table->buckets[index];
+    table->buckets[index] = newNode;
+}
+
+int existsInHashTable(HashTable *table, double data) {
+    unsigned int index = hash(data);
+    Node *temp = table->buckets[index];
+    while (temp != NULL) {
+        if (temp->data == data) {
+            return 1;  // Found
+        }
+        temp = temp->next;
+    }
+    return 0;  // Not found
+}
+
+void freeHashTable(HashTable *table) {
+    for (int i = 0; i < HASH_TABLE_SIZE; i++) {
+        Node *temp = table->buckets[i];
+        while (temp != NULL) {
+            Node *toDelete = temp;
+            temp = temp->next;
+            free(toDelete);
+        }
+    }
+}
+
 int compare(const void *a, const void *b) {
     double val1 = *(const double *)a;
     double val2 = *(const double *)b;
     return (val1 > val2) - (val1 < val2);
 }
-
+/*
 void SortElements(const Vector *input, Vector *output) {
     // Tri du tableau d'entrée
     qsort(input->data, input->length, sizeof(double), compare);
@@ -26,7 +94,8 @@ void SortElements(const Vector *input, Vector *output) {
     int uniqueCount = 0;
     for (int i = 0; i < input->length; i++) {
         if (i == 0 || input->data[i] != input->data[i - 1]) {
-            output->data[uniqueCount++] = input->data[i];
+            output->data[uniqueCount] = input->data[i];
+            uniqueCount+=1;
         }
     }
 
@@ -39,6 +108,38 @@ void SortElements(const Vector *input, Vector *output) {
     
     // Ajuster la longueur du tableau de sortie
     output->length = uniqueCount;
+}
+*/
+
+void SortElements(const Vector *input, Vector *output) {
+    HashTable table = {0};
+    for (int i = 0; i < input->length; i++) {
+        if (!existsInHashTable(&table, input->data[i])) {
+            insertHashTable(&table, input->data[i]);
+        }
+    }
+    // Allouer de la mémoire pour output->data
+    output->data = (double *)malloc(input->length * sizeof(double));
+    if (output->data == NULL) {
+        // Gérer l'erreur d'allocation
+        freeHashTable(&table);
+        exit(1);
+    }
+
+     int uniqueCount = 0;
+    for (int i = 0; i < input->length; i++) {
+    if (existsInHashTable(&table, input->data[i])) {
+        output->data[uniqueCount++] = input->data[i];
+        // Supprimer de la table de hachage pour éviter les doublons
+        deleteNode(&table, input->data[i]);
+    }
+}
+
+    // Adjust the length of the output array
+    output->length = uniqueCount;
+
+    // Clean up
+    freeHashTable(&table);
 }
 
 
@@ -90,88 +191,78 @@ void selectColumns(const Matrix *source, const Vector *columnIndices, Matrix *de
 
 
 
-void selectRowsCOO(const COOMatrix *source, const Vector *indices, COOMatrix *destination) {
+void selectRowsCOO(COOMatrix *source, const Vector *indices, COOMatrix *destination) {
     // Compter le nombre d'éléments non nuls dans les lignes sélectionnées
-    int nonZeroCount = 0;
-    for (int i = 0; i < source->nonZeroCount; i++) {
-        for (int j = 0; j < indices->length; j++) {
-            if (source->rowsIndices[i] == (int)indices->data[j]) {
-                nonZeroCount++;
-                break;
-            }
-        }
-    }
-
+    int nonZeroCount = source->nonZeroCount;
     // Allouer de la mémoire pour destination
+    Matrix A;
+    A=convertToDense(source);
     destination->values = (double *)malloc(nonZeroCount * sizeof(double));
     destination->rowsIndices = (int *)malloc(nonZeroCount * sizeof(int));
     destination->colsIndices = (int *)malloc(nonZeroCount * sizeof(int));
+    int idx = 0;
+    for (int i = 0; i < indices->length; i++) {
+        int rowIndex = (int)indices->data[i]; // Assurez-vous que les indices sont des entiers
+        for (int j = 0; j < source->cols; j++) {
+            if (A.data[rowIndex * source->cols + j] !=0)
+            {
+                destination->values[idx] = A.data[rowIndex * source->cols + j];
+                destination->rowsIndices[idx] = source->rowsIndices[i];
+                destination->colsIndices[idx] = source->colsIndices[i];
+                idx++;
+            }
+        }
+    }
+    
+    free(A.data);
+    destination->values = (double *)realloc(destination->values, idx * sizeof(double));
+    destination->rowsIndices = (int *)realloc(destination->rowsIndices, idx * sizeof(int));
+    destination->colsIndices = (int *)realloc(destination->colsIndices, idx * sizeof(int));
     //destination->depthsIndices = (int *)malloc(nonZeroCount * sizeof(int));
-    destination->nonZeroCount = nonZeroCount;
+    destination->nonZeroCount = idx;
     destination->rows = indices->length;
     destination->cols = source->cols;
     destination->depth = source->depth;
 
-    
-
-    // Copier les éléments non nuls des lignes sélectionnées
-    int idx = 0;
-    for (int i = 0; i < source->nonZeroCount; i++) {
-        for (int j = 0; j < indices->length; j++) {
-            if (source->rowsIndices[i] == (int)indices->data[j]) {
-                destination->values[idx] = source->values[i];
-                destination->rowsIndices[idx] = source->rowsIndices[i];
-                destination->colsIndices[idx] = source->colsIndices[i];
-           // destination->depthsIndices[idx] = source->depthsIndices[i];
-            idx++;
-            break;
-        }
-    }
-}
 }
 
 
 
 
 
-void selectColumnsCOO(const COOMatrix *source, const Vector *columnIndices, COOMatrix *destination) {
+void selectColumnsCOO(COOMatrix *source, const Vector *columnIndices, COOMatrix *destination) {
     // Compter le nombre d'éléments non nuls dans les colonnes sélectionnées
-    int nonZeroCount = 0;
-    for (int i = 0; i < source->nonZeroCount; i++) {
-        for (int j = 0; j < columnIndices->length; j++) {
-            if (source->colsIndices[i] == (int)columnIndices->data[j]) {
-                nonZeroCount++;
-                break;
-            }
-        }
-    }
-
+    int nonZeroCount = source->nonZeroCount;
     // Allouer de la mémoire pour destination
+    Matrix A;
+    A=convertToDense(source);
     destination->values = (double *)malloc(nonZeroCount * sizeof(double));
     destination->rowsIndices = (int *)malloc(nonZeroCount * sizeof(int));
     destination->colsIndices = (int *)malloc(nonZeroCount * sizeof(int));
-   // destination->depthsIndices = (int *)malloc(nonZeroCount * sizeof(int));
-    destination->nonZeroCount = nonZeroCount;
-    destination->rows = source->rows;
-    destination->cols = columnIndices->length;
-    destination->depth = source->depth;
-
-
-
-    // Copier les éléments non nuls des colonnes sélectionnées
     int idx = 0;
-    for (int i = 0; i < source->nonZeroCount; i++) {
-        for (int j = 0; j < columnIndices->length; j++) {
-            if (source->colsIndices[i] == (int)columnIndices->data[j]) {
-                destination->values[idx] = source->values[i];
+
+    for (int i = 0; i < columnIndices->length; i++) {
+        for (int j = 0; j < source->cols; j++) {
+            int colIndex = (int)columnIndices->data[j];
+            if (A.data[i * source->cols + colIndex ] !=0)
+            {
+                destination->values[idx] = A.data[i * source->cols + colIndex];
                 destination->rowsIndices[idx] = source->rowsIndices[i];
                 destination->colsIndices[idx] = source->colsIndices[i];
-               // destination->depthsIndices[idx] = source->depthsIndices[i];
                 idx++;
-                break;
             }
         }
     }
+    
+    free(A.data);
+    destination->values = (double *)realloc(destination->values, idx * sizeof(double));
+    destination->rowsIndices = (int *)realloc(destination->rowsIndices, idx * sizeof(int));
+    destination->colsIndices = (int *)realloc(destination->colsIndices, idx * sizeof(int));
+    //destination->depthsIndices = (int *)malloc(nonZeroCount * sizeof(int));
+    destination->nonZeroCount = idx;
+    destination->rows = source->rows;
+    destination->cols = columnIndices->length;
+    destination->depth = source->depth;
 }
 
 
@@ -267,42 +358,71 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
             index +=1;
             }
         }
+/*
 
+local_support_flat.data[index]=local_support.vectors[0].data[0];
+        index+=1;
+        for (int i = 0 ; i < local_support_SIZE; i++){
+            for( int j = 0 ; j < local_support.vectors[i].length ; j++ ){
+                int test=0;
+            for (int k = 0; k < index; k++)
+            {
+
+                
+                if(local_support_flat.data[k]==local_support.vectors[i].data[j])
+                {
+                    test=1;
+                    break;
+                }
+                
+            }
+            if(test==0){
+                local_support_flat.data[index] = local_support.vectors[i].data[j];
+            index +=1;
+            }
+            
+            }
+        }
+*/
     //////////////
     //BF_mask = list(set(local_support_flat))
     /// ici set enleve les doublon et list les trie donc en C
      // On ajout <stdlib.h> pour la fonction qsort et on a crée la fonction compare pour les sorter en ordre croissant
      // Puis sorted element supprime les doublons (voir la fonction sortelements en haut)
         /* BF_mask */ 
-
+        fprintf(stderr, " Check Point \n");
         SortElements(&local_support_flat, BF_mask);
+        saveVector(*BF_mask, "testooo.txt");
+        fprintf(stderr, " Check Point ok %d \n", local_support_flat.length);
        // saveVector(*BF_mask, "BF_mask_c.txt");
         free(local_support_flat.data); 
         local_support_flat.data=NULL;
+        
         /* BF_support_temp */
         // BF_support_temp = BF_support[BF_mask,:] on a créer la fonction selectRows
         
         COOMatrix BF_support_rows_selected;
 
         //selectRows(&BF_support, BF_mask, &BF_support_rows_selected);
+        fprintf(stderr, " Check Point \n");
         selectRowsCOO(&BF_support, BF_mask, &BF_support_rows_selected);
-        
+        fprintf(stderr, " Check Point \n");
         COOMatrix BF_support_temp;
         selectColumnsCOO(&BF_support_rows_selected, &IND_mask_active, &BF_support_temp);
         freeCOOMatrix(&BF_support_rows_selected);
-        
+        fprintf(stderr, " Check Point \n");
         //selectColumns(&BF_support_rows_selected, &IND_mask_active, &BF_support_temp);
        // free(BF_support_rows_selected.data);
         // W_temp = W[IND_mask[:,0],IND_mask[:,1]].reshape((len(IND_mask),1))
         // Utilisation pour W_temp
         Vector W_temp;
-        
+        fprintf(stderr, " Check Point \n");
         extractElementsAndReshape(&W, &IND_mask, &W_temp);
         // Utilisation pour W_S_temp
         
 
         
-
+        fprintf(stderr, " Check Point \n");
         // Nij_w = BF_support_temp * W_temp.
         
         COOMatrix Nij_w;
@@ -405,6 +525,7 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
         copyCOOMatrixStructure(&BF_support_temp, &Nij_nurbs);
         //fprintf(stderr,"compar: %d et %d \n",BF_support_temp.cols,rho_e_masked.length );
         hadamardVectorProductCOO2(&BF_support_temp, &rho_e, &Nij_nurbs,*BF_mask);
+        
         fprintf(stderr, " Check Point 1 \n");
         free(BF_support_temp.values);
         BF_support_temp.values =NULL;
