@@ -1,0 +1,16 @@
+.equation-box {
+    border: 2px solid #000;
+    padding: 15px;
+    background-color: #f8bf03;
+    width: auto; /* S'adapte au contenu */
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px auto; /* Centré avec une marge */
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); /* Ombre subtile */
+}
+
+.equation-box equation* {
+    margin: 5px 0;
+}

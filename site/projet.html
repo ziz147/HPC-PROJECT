@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Projet</title>
+    <link rel="stylesheet" type="text/css" href="projet.css">
+    <style>
+        body { 
+            font-family: 'Arial', sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background-color: #f4f4f4;
+        }
+        header, footer { 
+            background-color: #003366; 
+            color: white; 
+            text-align: center; 
+            padding: 15px 0; 
+        }
+        nav ul { 
+            list-style-type: none; 
+            padding: 0; 
+            margin: 0;
+            text-align: center; 
+        }
+        nav ul li { 
+            display: inline; 
+            margin: 0 15px; 
+        }
+        nav a { 
+            color: white; 
+            text-decoration: none; 
+            font-size: 1.2em;
+        }
+        .banner { 
+            background-color: #ddd; 
+            padding: 20px; 
+            text-align: center; 
+        }
+        .content { 
+            margin: 20px; 
+            text-align: center;
+        }
+        .content img { 
+            max-width: 100%; 
+            height: auto; 
+            display: block; 
+            margin: 10px auto; 
+        }
+        .footer { 
+            text-align: center; 
+            padding: 20px 0; 
+        }
+
+        /* Styles ajoutés */
+        .equation-box {
+            border: 2px solid #000;
+            padding: 15px;
+            background-color: #f8bf03;
+            width: auto;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px auto;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .equation-box equation* {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1></h1>
+    <nav>
+        <ul>
+            <li><a href="#project-details">Project-details</a></li>
+            <li><a href="#Recap">Recap of the project</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#gallery">gallery</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+    </nav>
+</header>
+
+<div class="banner">
+    <h2 style="font-size: 100px; color: rgb(255, 0, 0);">NURBS Surfaces for Topology Optimization Problems</h2>    
+
+    <div style="display: inline-block; text-align: center;">
+        <img src="/home/willy/Bureau/site/logo_em.jpg" alt="" style="width: 400px;">
+        <p><button onclick="location.href='https://enseirb-matmeca.bordeaux-inp.fr/fr'">En savoir plus</button></p>
+    </div>
+    
+    <!-- Deuxième paire d'image et de bouton -->
+    <div style="display: inline-block; text-align: center;">
+        <img src="/home/willy/Bureau/site/ArtsMetiers.jpg" alt="" style="width: 400px;">
+        <p><button onclick="location.href='https://www.artsetmetiers.fr/fr'">En savoir plus</button></p>
+    </div>
+    
+    <!-- Troisième paire d'image et de bouton -->
+    <div style="display: inline-block; text-align: center;">
+        <img src="/home/willy/Bureau/site/Footer-I2M.png" alt="" style="width: 400px;">
+        <p><button onclick="location.href='https://www.i2m.u-bordeaux.fr/'">En savoir plus</button></p>
+    </div>
+
+</div>
+
+<div class="content">
+    <section id="project-overview">
+        <h3>Présentation of projetct</h3>
+        <span class="font_large" style="font-family: 'times new roman', times; display: block; text-align: center;margin-bottom : 40px;">
+            NURBS are used to mathematically represent
+            geometric objects. They generalize the representation by B-splines of curves and surfaces by adding a denominator.
+            They are in fact defined with points in homogeneous coordinates. A B-spline resembles a piecewise polynomial representation,
+            while a NURBS is a piecewise rational fraction representation. Particularly used in 3D editing software, these adjustment functions are particularly used
+            in the field of computing, more precisely in image compression and in computer-aided design, in order to generate and represent soft shapes and ergonomic.
+            Ces équations nous permettent de définir des courbes et des surfaces en utilisant des points de contrôle et des poids. Le contrôle précis de ces 
+            points de contrôle nous permet de créer des formes complexes avec une grande précision.
+        </span>
+        
+        <p style="text-align: center;">Les équations de NURBS sont définies comme suit :</p>
+        <div style="display: flex; justify-content: center;">
+            <img src="/home/willy/Bureau/site/NURBS_3-D_surface.gif" alt="Équation NURBS" style="width: 30%; margin: 0 10px;">
+            <img src="/home/willy/Bureau/site/Surface_modelling.svg.png" alt="Équation NURBS" style="width: 30%; margin: 0 10px;">
+        </div>
+        <p>The NURBS surface is defined as:</p>
+        
+        <p>
+        \begin{equation*}
+        S(u,v) = \sum_{i=0}^{n_u} \sum_{j=0}^{n_v} R_{i,j}(u,v) P_{i,j}
+        \end{equation*}
+        where:
+        </p>
+        
+        <p>- \( R_{i,j}(u,v) \): Piecewise Rational Basis Functions</p>
+        <p>-\(P_{i,j}= x_{i,j} , y_{i,j}, z_{i,j}\): Control Points</p>
+        <p>   
+        \begin{equation*}
+            R_{i,j}(u,v) = \frac{N_{i,p}(u)N_{j,q}(v)w_{i,j}}{\sum_{k=0}^{n_u} \sum_{l=0}^{n_v} N_{k,p}(u)N_{l,q}(v)w_{k,l}}
+        \end{equation*}
+        where:\
+        </p>- \(N_{i,p}(u), N_{j,q}(v)\): Blending Functions</p>
+        <p>- \(p\) and \(q\): NURBS Degrees along \(u\) and \(v\) directions</p>
+        <p> \(w_{i,j}\): Weights</p>
+        \begin{equation*}
+            N_{i,0}(u) = 
+            \begin{cases} 
+                1 & \text{if } U_i \leq u < U_{i+1} \\
+                0 & \text{otherwise}
+            \end{cases}
+        \end{equation*}
+        \begin{equation*}
+            N_{i,p}(u) = \frac{u - U_i}{U_{i+p} - U_i} N_{i,p-1}(u) + \frac{U_{i+p+1} - u}{U_{i+p+1} - U_{i+1}} N_{i+1,p-1}(u)
+        \end{equation*}
+
+                
+            <div class="equation-box">
+                \begin{equation*}
+                    R_{i,j} = 0 \text{ si } (u,v) \text{ est à l'extérieur de } [ U_i, U_{i+p+1}[ \times [ V_j, V_{j+q+1}[
+                \end{equation*}
+            </div>
+       
+        
+    </section>
+    
+  
+    <section id="about">
+        <h3>À propos de l'Auteur/Équipe</h3>
+        <p>Courte biographie ou présentation de l'équipe.</p>
+    </section>
+
+
+
+    <section id="project-highlights">
+        <h3>Extraits ou Aperçus du Projet</h3>
+        <!-- Exemples d'images, assurez-vous que ces images sont hébergées ou disponibles en ligne -->
+        <img src="" alt="Extrait du projet">
+        <img src="" alt="Extrait du projet">
+    </section>
+
+    <!-- Vous pouvez ajouter ici une galerie d'images si nécessaire -->
+    <section id="gallery">
+        <h3>Galerie d'Images</h3>
+        <div>
+            <!-- Assurez-vous que le chemin de l'image est correct -->
+            <img src="" alt="Image 1">
+            <img src="" alt="Image 2">
+            <!-- Ajoutez autant d'images que nécessaire -->
+        </div>
+    </section>
+
+    <!-- Section Contact avec formulaire si nécessaire -->
+    <section id="contact">
+        <h3>Contactez-nous</h3>
+        <p>Formulaire de contact ou informations pour joindre l'équipe du projet.</p>
+        <!-- Exemple de formulaire de contact -->
+        <form action="votre_script_de_traitement.php" method="POST">
+            <label for="name">Nom :</label><br>
+            <input type="text" id="name" name="name"><br>
+    
+            <label for="email">Email :</label><br>
+            <input type="email" id="email" name="email"><br>
+    
+            <label for="message">Message :</label><br>
+            <textarea id="message" name="message"></textarea><br>
+    
+            <input type="submit" value="Envoyer">
+        </form>
+    </section>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-chtml.min.js"></script>
+    
+    </body>
+    </html>
+    
