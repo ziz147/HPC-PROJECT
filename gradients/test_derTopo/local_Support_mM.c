@@ -9,7 +9,7 @@
 
 //Cette fonction calcul le support local en 2D
 
-void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vector U1, Vector U2, int p1_temp, int p2_temp, int n1_temp, int n2_temp, ListOfVectors *local_Support, Matrix *BF_Support, Vector *IND_mask_active) {
+void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vector U1, Vector U2, int p1_temp, int p2_temp, int n1_temp, int n2_temp, ListOfVectors *local_Support, COOMatrix *BF_Support, Vector *IND_mask_active) {
 
     // Obtenir la taille de la matrice IND_mask
     int N_ROWS_mask = IND_mask.rows;
@@ -25,8 +25,18 @@ void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vec
     }
 
     // Allouer de l'espace pour BF_Support
-    definem(BF_Support, u1.rows, IND_mask_tot.rows);
-    mzero(BF_Support);
+    BF_Support->rows=u1.rows;
+    BF_Support->cols = IND_mask_tot.rows;
+    BF_Support->depth = 1;  // Ou une autre valeur appropriée pour la dimension de profondeur
+    BF_Support->nonZeroCount = 0;
+
+    // Allocation de mémoire pour les tableaux ca va se reallouer chaque 1000 valeurs non nulles
+    BF_Support->values = (double *)malloc(1000 * sizeof(double));
+    BF_Support->rowsIndices = (int *)malloc(1000 * sizeof(int));
+    BF_Support->colsIndices = (int *)malloc(1000 * sizeof(int));
+
+    //definem(BF_Support, u1.rows, IND_mask_tot.rows);
+    //mzero(BF_Support);
 
     // Initialiser les listes IND_mask_active et local_Support
     IND_mask_active->length = 0;
@@ -61,6 +71,8 @@ void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vec
                 break;
             }
         }
+
+        
          // si found=1 alors IND_mask_tot_temp in IND_mask_temp est vrai
         // liberer la memoire pour ind_mas_tot_temp car on aura plus besoin d'elle
         free(IND_mask_tot_temp);
@@ -123,6 +135,7 @@ void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vec
         }
             // Évaluer le produit de la fonction de base des éléments appartenant au support local 
             //(essayer sur tous les éléments appartenant à LS)
+            
             Matrix P_rho_aux;
             definem(&P_rho_aux, n1_temp + 1, n2_temp + 1);
             mzero(&P_rho_aux);
@@ -149,21 +162,27 @@ void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vec
             // Initialisation de w avec des valeurs à 1
             for (int i1 = 0; i1 < n1_temp+1; i1++)
             {
-                for (int i2 = 0; i2 < n2_temp; i2++)
+                for (int i2 = 0; i2 < n2_temp+1; i2++)
                 {
                     matrice(w,i1,i2)=1;
                 }
                 
             }
+            
             // on declare tempo car en c on peut pas remplir une colonne a partir d'un vecteur sans boucle
             Vector tempo;
-
+            
             // Appel de la fonction SurfacePoint_fun_numba
             tempo = SurfacePoint_fun_numba(u, n1_temp, p1_temp, U1, v, n2_temp, p2_temp, U2, P_rho_aux, w, 0);
-
+            
             // remplir la matrice BF_support
             for (int i = 0; i < count; i++) {
-                matricep(BF_Support, ind[i],k) = tempo.data[i];
+                if (tempo.data[i] !=0)
+                {
+                    int idx = ind[i];
+                    addValueToCOOMatrix(BF_Support, idx, k,tempo.data[i]);
+                }
+                
             }
             // Libérer les mémoire allouée
             free(ind);
@@ -181,7 +200,7 @@ void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vec
 
  //Calcul du local support en 3D
 
- void ls_3d(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2,Matrix u3 , Vector U1, Vector U2, Vector U3, int p1_temp, int p2_temp, int p3_temp, int n1_temp, int n2_temp, int n3_temp,ListOfVectors *local_Support, Matrix *BF_Support, Vector *IND_mask_active){
+ void ls_3d(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2,Matrix u3 , Vector U1, Vector U2, Vector U3, int p1_temp, int p2_temp, int p3_temp, int n1_temp, int n2_temp, int n3_temp,ListOfVectors *local_Support, COOMatrix *BF_Support, Vector *IND_mask_active){
     // Obtenir la taille de la matrice IND_mask
 
     int N_ROWS_mask = IND_mask.rows;
@@ -195,8 +214,19 @@ void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vec
         }
     }
     // Allouer de l'espace pour BF_Support
-    definem(BF_Support, u1.rows, IND_mask_tot.rows);
-    mzero(BF_Support);
+    // Allouer de l'espace pour BF_Support
+    BF_Support->rows=u1.rows;
+    BF_Support->cols = IND_mask_tot.rows;
+    BF_Support->depth = 1;  // Ou une autre valeur appropriée pour la dimension de profondeur
+    BF_Support->nonZeroCount = 0;
+
+    // Allocation de mémoire pour les tableaux
+    BF_Support->values = (double *)malloc(1000 * sizeof(double));
+    BF_Support->rowsIndices = (int *)malloc(1000 * sizeof(int));
+    BF_Support->colsIndices = (int *)malloc(1000 * sizeof(int));
+
+    //definem(BF_Support, u1.rows, IND_mask_tot.rows);
+   // mzero(BF_Support);
 
     // Initialiser les listes IND_mask_active et local_Support
     IND_mask_active->length = 0;
@@ -312,13 +342,18 @@ void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vec
                 
             }
 
-        Matrix tempo;
+        Vector tempo;
         // appel a la fonction hypersurface
         tempo = HyperSurfacePoint_fun( n1_temp, p1_temp, U1, n2_temp, p2_temp, U2,n3_temp, p3_temp, U3,  P_rho_aux, w_t, u, v, w, 0);
         // remplir la matrice BF_support
-        for (int i = 0; i < count; i++) {
-            matricep(BF_Support, ind[i],k) = tempo.data[i];
-        }
+        for (int i = 0; i < tempo.length; i++) {
+                if (tempo.data[i] !=0)
+                {
+                    int idx = ind[i];
+                    addValueToCOOMatrix(BF_Support, idx, k,tempo.data[i]);
+                }
+                
+            }
         // Libérer les mémoire allouée
         free(tempo.data);
         free(u.data);
@@ -334,7 +369,7 @@ void ls_2d_numba(Matrix IND_mask_tot, Matrix IND_mask, Matrix u1, Matrix u2, Vec
 
 
 //La fonction principale pour calculer le support local en fonction de la dimension
-void local_support_fun(int p1, int p2, int p3, int n1, int n2, int n3, int DIM, Matrix ELEMENTS, Matrix IND_mask, Matrix IND_mask_tot, Vector U1, Vector U2, Vector U3, ListOfVectors *local_Support, Matrix *BF_Support, Vector *IND_mask_active) {
+void local_support_fun(int p1, int p2, int p3, int n1, int n2, int n3, int DIM, Matrix ELEMENTS, Matrix IND_mask, Matrix IND_mask_tot, Vector U1, Vector U2, Vector U3, ListOfVectors *local_Support, COOMatrix *BF_Support, Vector *IND_mask_active) {
         // on a ajouter p1 .. n3 comme variable dans la fonction pour ne pas avoir a les déclarer comme variables generale
         // reste a ajouter la condition if flag_scale == 'micro_macro': ici
         // il nous manque les données p1M ....

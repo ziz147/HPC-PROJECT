@@ -21,7 +21,7 @@ int existsInHashTable(HashTable *table, double data);
 void freeHashTable(HashTable *table);
 
 Matrix der_BSPLINE(Vector IND_mask_active, Matrix BF_support);
-void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_mask_active , Matrix IND_mask, Matrix IND_mask_tot ,Vector rho_e, Matrix P_rho , Matrix W, int DIM, Matrix* der_CP, COOMatrix* der_W, Vector* BF_mask);
+void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_mask_active , Matrix IND_mask, Matrix IND_mask_tot ,Vector rho_e, Matrix P_rho , Matrix W, int DIM, COOMatrix* der_CP, COOMatrix* der_W, Vector* BF_mask);
 int compare(const void *a, const void *b);
 
 
@@ -30,14 +30,14 @@ int compare(const void *a, const void *b);
 
 // les fonctions utiles:
 void SortElements(const Vector *input, Vector *output);
-
+void duplicate(const Vector *input, Vector *output);
 void selectRows(const Matrix *source, const Vector *indices, Matrix *destination);
 void selectColumns(const Matrix *source, const Vector *columnIndices, Matrix *destination);
 
 void selectRowsCOO(COOMatrix *source, const Vector *indices, COOMatrix *destination);
 void selectColumnsCOO(COOMatrix *source, const Vector *columnIndices, COOMatrix *destination);
 
-
+void extractElementsAndReshape3d(const Matrix *W, const Matrix *indices, Vector *output);
 void extractElementsAndReshape(const Matrix *W, const Matrix *indices, Vector *output);
 void matrixVectorMultiplication(const Matrix *A, const Vector *B, Vector *C);
 void matrixVectorMultiplicationCOO(const COOMatrix *A, const Vector *B, Vector *C);

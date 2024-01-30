@@ -35,49 +35,57 @@ int main() {
     Vector U2 = loadVector("U2.dat");
     Vector U3 = loadVector("U3.dat");
     ListOfVectors local_Support;
-    Matrix BF_Support;
+    COOMatrix BF_Support;
     Vector IND_mask_active;
-    fprintf(stderr, " Ici1\n");
+    fprintf(stderr, " OK\n");
     local_support_fun(p1, p2, p3, n1, n2, n3, DIM, ELEMENTS,IND_mask,IND_mask_tot,U1,U2, U3, &local_Support, &BF_Support, &IND_mask_active);
     free(ELEMENTS.data);
     free(U1.data);
     free(U2.data);
     free(U3.data);
 
-    saveMatrix(BF_Support,"BF_Support_c.txt");
-
-
-    COOMatrix BF_SupportCOO;
-    BF_SupportCOO = convertToCOO(&BF_Support);  
+    //saveMatrix(BF_Support,"BF_Support_c.txt");
     
-    BF_SupportCOO.depth=1;
-    free(BF_Support.data);
-    BF_Support.data=NULL;
+    saveCOOMatrix(&BF_Support,"BF_supp_c.dat");
+    //saveCOOMatrix(&BF_Support,"BF_Support_c.dat");
+    
     //Matrix P_rho_temp = loadMatrix("P_rho_test.dat");
     Matrix P_rho= loadMatrix("P_rho_test.dat");
+
     // il reste a traiter le probleme des matrices 3d et ajouter le depth pour chaque matrice
    // reshape3D(&P_rho_temp, &P_rho, 28, 28, 28);
     //free(P_rho_temp.data);
 
    // Matrix W_temp = loadMatrix("W_test.dat");
     Matrix W= loadMatrix("W_test.dat");
-
+    if (DIM==3){
+        W.cols=28;
+        W.rows=28;
+        W.depth=28;
+        P_rho.cols=28;
+        P_rho.rows=28;
+        P_rho.depth=28;
+    }
     //reshape3D(&W_temp,&W, 28, 28, 28);
    // saveMatrix(W,"der_CP_c.txt");
    // free(W_temp.data);
     Vector rho_e = loadVector("rho_e_test.dat");
     
 
-    Matrix der_CP; 
+    COOMatrix der_CP; 
     Vector BF_mask;
     COOMatrix der_W;
     fprintf(stderr, " der nurbs \n");
-    int maxind=562800;
+    int maxind=1;
     der_W.rowsIndices= (int *)malloc( maxind*sizeof(int));
     der_W.colsIndices= (int *)malloc( maxind* sizeof(int));
     der_W.values= (double *)malloc( maxind* sizeof(double));
-    der_NURBS(local_Support ,BF_SupportCOO ,IND_mask_active , IND_mask, IND_mask_tot ,rho_e, P_rho , W, 2, &der_CP, &der_W, &BF_mask);
-    
+
+    der_NURBS(local_Support ,BF_Support ,IND_mask_active , IND_mask, IND_mask_tot ,rho_e, P_rho , W, DIM, &der_CP, &der_W, &BF_mask);
+    //saveCOOMatrix(&der_W,"der_W_c.dat");
+    //COOMatrix der_CP0;
+    //der_CP0=convertToCOO(&der_CP);
+    //saveCOOMatrix(&der_CP0,"der_CP_c.dat");
     
     fprintf(stderr, " NURBS OK \n");
     //saveVector(BF_mask, "BF_mask_c.txt");

@@ -223,7 +223,7 @@ void hadamardVectorProductCOO(const COOMatrix *P, const Vector *w, COOMatrix *p_
 void hadamardVectorProductCOO2(const COOMatrix *P, const Vector *w, COOMatrix *p_w,Vector max) {
     // Vérifier si les dimensions sont compatibles
 
-    fprintf(stderr, " %d %d %d %d \n",P->cols,w->length, max.length,P->rows);
+
     // Copier les dimensions et les indices de la matrice originale
    // *p_w = *P; // Copie superficielle pour conserver les indices et dimensions
 
@@ -259,6 +259,7 @@ void hadamard_product(const Matrix *P, const Matrix *w, Matrix *p_w) {
     // Définir les dimensions de p_w
     p_w->rows = P->rows;
     p_w->cols = P->cols;
+
 }
 
 //Calcule le produit Hadamard de deux matrices 3D
@@ -716,7 +717,7 @@ void saveCOOMatrix(const COOMatrix *matrix, const char *filename) {
 
     // Écriture des valeurs non nulles et de leurs indices
     for (int i = 0; i < matrix->nonZeroCount; i++) {
-        fprintf(file, "%d %d %lf\n", matrix->rowsIndices[i], matrix->colsIndices[i], matrix->values[i]);
+        fprintf(file, "%d %d %e\n", matrix->rowsIndices[i], matrix->colsIndices[i], matrix->values[i]);
     }
 
     fclose(file);

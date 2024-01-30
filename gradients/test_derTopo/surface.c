@@ -5,14 +5,15 @@
 void find_span_basis(double pt, int p, int n, const Vector U, int *span, Vector *N) {
     int j, r;
     double saved, temp;
+    
     double *left = (double *)malloc((p + 1) * sizeof(double));
     double *right = (double *)malloc((p + 1) * sizeof(double));
     N->data = (double *)malloc((p + 1) * sizeof(double));
     N->length = p + 1;
 
-
+    
     // Initialization
-    for (int i = 0; i <= p; i++) {
+    for (int i = 0; i < p+1; i++) {
         N->data[i] = 0.0;
         left[i] = 0.0;
         right[i] = 0.0;
@@ -27,7 +28,7 @@ void find_span_basis(double pt, int p, int n, const Vector U, int *span, Vector 
     } else {
         int low = p;
         int high = n + 1;
-        int mid = (high + low) / 2;
+        int mid = (int)((high + low) / 2);
 
         while (pt < U.data[mid] || pt >= U.data[mid + 1]) {
             if (pt < U.data[mid]) {
@@ -35,7 +36,7 @@ void find_span_basis(double pt, int p, int n, const Vector U, int *span, Vector 
             } else {
                 low = mid;
             }
-            mid = (low + high) / 2;
+            mid =(int) ((low + high) / 2);
         }
 
         *span = mid;
@@ -64,10 +65,11 @@ double SurfacePoint_fun2(int p, int q, Matrix P, int uspan, int vspan, Vector Nu
 
     for (int l = 0; l <= q; l++) {
         double temp = 0.0;
-        int vind = vspan - q + l;
+        int vind = (int)vspan - q + l;
 
         for (int k = 0; k <= p; k++) {
-            temp += Nu.data[k] * P.data[uind + k + P.rows * vind];
+            temp += Nu.data[k] * matrice(P,uind + k,vind);
+            
         }
 
         surf += Nv.data[l] * temp;
@@ -88,10 +90,12 @@ Vector SurfacePoint_fun_numba(Matrix u, int n, int p, Vector U, Matrix v, int m,
         
         if (NURBS == 1) {  // NURBS
             Matrix p_w;
-            p_w.rows = P.rows;
-            p_w.cols = P.cols;
+            p_w.rows = n+1;
+            p_w.cols = m+1;
             p_w.data = (double *)malloc(p_w.rows * p_w.cols * sizeof(double));
             mzero(&p_w);
+            //p_w=Mat_mat_product(P,w);
+            hadamard_product(&P,&w,&p_w);
             for (int i = 0; i < size_u_r; i++) {
                 
                 Vector nu, nv;
@@ -113,9 +117,13 @@ Vector SurfacePoint_fun_numba(Matrix u, int n, int p, Vector U, Matrix v, int m,
                 Vector nu, nv;
 
                 find_span_basis(u.data[i], p, n, U, &uspan, &nu);
+
+
                 find_span_basis(v.data[i], q, m, V, &vspan, &nv);
 
+
                 double surf_matrix = SurfacePoint_fun2(p, q, P, uspan, vspan, nu, nv);
+
                 surf.data[i] = surf_matrix;
                 free(nu.data);
                 free(nv.data);
@@ -133,7 +141,8 @@ Vector SurfacePoint_fun_numba(Matrix u, int n, int p, Vector U, Matrix v, int m,
             p_w.rows = n + 1;
             p_w.cols = m + 1;
             p_w.data = (double *)malloc(p_w.rows * p_w.cols * sizeof(double));
-            hadamard_product(&P, &w, &p_w);
+            //p_w=Mat_mat_product(P,w);
+            hadamard_product(&P,&w,&p_w);
             for (int i = 0; i < size_u_r; i++) {
                 for (int j = 0; j < size_u_c; j++) {
                     
