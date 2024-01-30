@@ -1,4 +1,4 @@
-DIM: 2
+DIM: 3
 NURBS: 0
 length: 200
 height: 200
@@ -15,6 +15,6 @@ p3: 2
 n1: 27
 n2: 27
 n3: 27
-write_BF_support: 0
+write_BF_support: 1
 write_IND_mask_active: 1
 write_local_support: 1

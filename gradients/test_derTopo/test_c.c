@@ -43,11 +43,26 @@ int main() {
     free(U1.data);
     free(U2.data);
     free(U3.data);
-
-    //saveMatrix(BF_Support,"BF_Support_c.txt");
+    if (write_IND_mask_active == 1)
+    {
+        fprintf(stderr, " Sauvegarde IND_mask_active \n");
+        saveVector(IND_mask_active, "IND_mask_active_c.txt");
+    }
     
-    saveCOOMatrix(&BF_Support,"BF_supp_c.dat");
-    //saveCOOMatrix(&BF_Support,"BF_Support_c.dat");
+    if (write_local_support==1)
+    {
+        fprintf(stderr, " Sauvegarde local_Support \n");
+        saveListOfVectors(local_Support,"local_Support_c.txt");
+    }
+    
+    
+    if (write_BF_support==1)
+    {
+        fprintf(stderr, " Sauvegarde BF_Support \n");
+        saveCOOMatrix(&BF_Support,"BF_Support_c.txt");
+    }
+
+
     
     //Matrix P_rho_temp = loadMatrix("P_rho_test.dat");
     Matrix P_rho= loadMatrix("P_rho_test.dat");
@@ -82,12 +97,21 @@ int main() {
     der_W.values= (double *)malloc( maxind* sizeof(double));
 
     der_NURBS(local_Support ,BF_Support ,IND_mask_active , IND_mask, IND_mask_tot ,rho_e, P_rho , W, DIM, &der_CP, &der_W, &BF_mask);
-    //saveCOOMatrix(&der_W,"der_W_c.dat");
+    fprintf(stderr, " NURBS OK \n");
+    fprintf(stderr, " Sauvegarde der_W \n");
+    saveCOOMatrix(&der_W,"der_W_c.txt");
+    fprintf(stderr, " Sauvegarde der_CP \n");
+    saveCOOMatrix(&der_CP,"der_CP_c.txt");
+    fprintf(stderr, " Sauvegarde BF_mask \n");
+    saveVector(BF_mask, "BF_mask_c.txt");
+    //
     //COOMatrix der_CP0;
     //der_CP0=convertToCOO(&der_CP);
     //saveCOOMatrix(&der_CP0,"der_CP_c.dat");
     
-    fprintf(stderr, " NURBS OK \n");
+    
+    free(IND_mask_active.data);
+    freeListOfVectors(&local_Support);
     //saveVector(BF_mask, "BF_mask_c.txt");
     //saveMatrix(der_CP,"der_CP_c.txt");
     //saveMatrix(der_W,"der_W_c.txt");

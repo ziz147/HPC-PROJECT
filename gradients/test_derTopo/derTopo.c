@@ -820,6 +820,7 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
         copyCOOMatrixStructure(&BF_support_temp, &Nij_nurbs);
         hadamardVectorProductCOO2(&BF_support_temp, &rho_e, &Nij_nurbs,*BF_mask);
 
+
         free(BF_support_temp.values);
         BF_support_temp.values =NULL;
         subtractCOOMatrices(&Nij_P, &Nij_nurbs, der_W);
@@ -829,13 +830,8 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
             double value =der_W->values[i]/ S_w.data[row];
             der_W->values[i] = value;
     }
-    free(S_w.data);               
-
-                     
-    free(Nij_P.values);             
-    free(Nij_nurbs.values);
+    
     }
-
 }
 
 
