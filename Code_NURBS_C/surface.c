@@ -113,9 +113,11 @@ Vector SurfacePoint_fun_numba(Matrix u, int n, int p, Vector U, Matrix v, int m,
 
             free(p_w.data);
         } else {  // BSPLINE
+            
+            
             for (int i = 0; i < size_u_r; i++) {
-                
                 Vector nu, nv;
+                
 
                 find_span_basis(u.data[i], p, n, U, &uspan, &nu);
 
@@ -123,12 +125,13 @@ Vector SurfacePoint_fun_numba(Matrix u, int n, int p, Vector U, Matrix v, int m,
                 find_span_basis(v.data[i], q, m, V, &vspan, &nv);
 
 
-                double surf_matrix = SurfacePoint_fun2(p, q, P, uspan, vspan, nu, nv);
-
-                surf.data[i] = surf_matrix;
+                surf.data[i] = SurfacePoint_fun2(p, q, P, uspan, vspan, nu, nv);
                 free(nu.data);
-                free(nv.data);
+            free(nv.data);
+                 
+                
             }
+            
         }
     } else {  // when u is passed as a grid
         
@@ -162,6 +165,7 @@ Vector SurfacePoint_fun_numba(Matrix u, int n, int p, Vector U, Matrix v, int m,
 
             free(p_w.data);
         } else {  // BSPLINE
+        #pragma omp parallel for
             for (int i = 0; i < size_u_r; i++) {
                 for (int j = 0; j < size_u_c; j++) {
                     

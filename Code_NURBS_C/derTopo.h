@@ -41,4 +41,5 @@ void extractElementsAndReshape3d(const Matrix *W, const Matrix *indices, Vector 
 void extractElementsAndReshape(const Matrix *W, const Matrix *indices, Vector *output);
 void matrixVectorMultiplication(const Matrix *A, const Vector *B, Vector *C);
 void matrixVectorMultiplicationCOO(const COOMatrix *A, const Vector *B, Vector *C);
+void selectRowcolsCOO(COOMatrix *source, const Vector *indices, const Vector *columnIndices, COOMatrix *destination);
 #endif // DER_TOPO_H    

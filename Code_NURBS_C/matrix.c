@@ -272,6 +272,7 @@ void hadamard_product3d(Matrix P, Matrix w, Matrix *p_w) {
     }
 
     // Effectuer la multiplication Hadamard
+    #pragma omp parallel for
     for (int i = 0; i < P.rows; i++) {
         for (int j = 0; j < P.cols; j++) {
             for (int k = 0; k < P.depth; k++) {
@@ -544,8 +545,9 @@ Matrix convertToDense(COOMatrix *cooMatrix) {
     Matrix denseMatrix;
     denseMatrix.rows = cooMatrix->rows;
     denseMatrix.cols = cooMatrix->cols;
-    denseMatrix.depth = cooMatrix->depth;  // Assumant que depth est utilisé de la même manière
-    denseMatrix.data = (double *)malloc(denseMatrix.rows * denseMatrix.cols * sizeof(double));
+    denseMatrix.depth = cooMatrix->depth;  // Assumant que depth est utilisé de la même manière7
+    int max=denseMatrix.rows * denseMatrix.cols;
+    denseMatrix.data = (double *)malloc(max * sizeof(double));
 
     if (denseMatrix.data == NULL) {
         fprintf(stderr, "Erreur d'allocation mémoire\n");
@@ -553,13 +555,15 @@ Matrix convertToDense(COOMatrix *cooMatrix) {
     }
 
     // Initialiser tous les éléments de denseMatrix à 0
-    for (int i = 0; i < denseMatrix.rows; i++) {
-        for (int j = 0; j < denseMatrix.cols; j++) {
-            denseMatrix.data[i * denseMatrix.cols + j] = 0.0;
-        }
+    #pragma omp parallel for
+    for (int i = 0; i<max; i++) {
+        
+            denseMatrix.data[i] = 0.0;
+        
     }
 
     // Remplir les éléments non nuls
+    #pragma omp parallel for
     for (int idx = 0; idx < cooMatrix->nonZeroCount; idx++) {
         int row = cooMatrix->rowsIndices[idx];
         int col = cooMatrix->colsIndices[idx];

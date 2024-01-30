@@ -39,15 +39,14 @@ int main() {
     COOMatrix BF_Support;
     Vector IND_mask_active;
 
-    double start_time = omp_get_wtime();
+    
     local_support_fun(p1, p2, p3, n1, n2, n3, DIM, ELEMENTS,IND_mask,IND_mask_tot,U1,U2, U3, &local_Support, &BF_Support, &IND_mask_active);
-    double end_time = omp_get_wtime();
-    double execution_time = end_time - start_time;
+    
 
 
 
 
-    printf("Temps d'exécution : %.4f secondes\n", execution_time);
+    
 
     
     free(ELEMENTS.data);
@@ -73,7 +72,7 @@ int main() {
         saveCOOMatrix(&BF_Support,"BF_Support_c.txt");
     }
 
-/*
+
     
     //Matrix P_rho_temp = loadMatrix("P_rho_test.dat");
     Matrix P_rho= loadMatrix("P_rho_test.dat");
@@ -106,8 +105,12 @@ int main() {
     der_W.rowsIndices= (int *)malloc( maxind*sizeof(int));
     der_W.colsIndices= (int *)malloc( maxind* sizeof(int));
     der_W.values= (double *)malloc( maxind* sizeof(double));
-
+    double start_time = omp_get_wtime();
     der_NURBS(local_Support ,BF_Support ,IND_mask_active , IND_mask, IND_mask_tot ,rho_e, P_rho , W, DIM, &der_CP, &der_W, &BF_mask);
+    double end_time = omp_get_wtime();
+    double execution_time = end_time - start_time;
+    printf("Temps d'exécution : %.4f secondes\n", execution_time);
+    /*
     fprintf(stderr, " NURBS OK \n");
     fprintf(stderr, " Sauvegarde der_W \n");
     saveCOOMatrix(&der_W,"der_W_c.txt");
@@ -115,6 +118,7 @@ int main() {
     saveCOOMatrix(&der_CP,"der_CP_c.txt");
     fprintf(stderr, " Sauvegarde BF_mask \n");
     saveVector(BF_mask, "BF_mask_c.txt");
+    */
     //
     //COOMatrix der_CP0;
     //der_CP0=convertToCOO(&der_CP);
@@ -132,6 +136,6 @@ int main() {
     
     //free(IND_mask.data);
    // free(IND_mask_tot.data);
-*/
+
     return 0;
 }

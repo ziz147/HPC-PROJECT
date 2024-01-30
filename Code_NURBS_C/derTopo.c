@@ -371,12 +371,16 @@ void selectColumnsCOO(COOMatrix *source, const Vector *columnIndices, COOMatrix 
     int nonZeroCount = source->nonZeroCount;
     // Allouer de la mémoire pour destination
     Matrix A;
+    double start_time = omp_get_wtime();
     A=convertToDense(source);
+    double end_time = omp_get_wtime();
+    double execution_time = end_time - start_time;
+    printf("dense tesst : %.4f secondes\n", execution_time);
     destination->values = (double *)malloc(nonZeroCount * sizeof(double));
     destination->rowsIndices = (int *)malloc(nonZeroCount * sizeof(int));
     destination->colsIndices = (int *)malloc(nonZeroCount * sizeof(int));
     int idx = 0;
-
+    
     for (int i = 0; i < source->rows; i++) {
         for (int j = 0; j < columnIndices->length; j++) {
             int colIndex = (int)columnIndices->data[j];
@@ -397,11 +401,72 @@ void selectColumnsCOO(COOMatrix *source, const Vector *columnIndices, COOMatrix 
     destination->cols = columnIndices->length;
     destination->depth = source->depth;
 }
+void selectRowcolsCOO(COOMatrix *source, const Vector *indices, const Vector *columnIndices, COOMatrix *destination) {
+    int nonZeroCount = source->nonZeroCount;
+    Matrix A = convertToDense(source);
 
+    int *local_counts = calloc(omp_get_max_threads(), sizeof(int));
+    double **local_values = malloc(omp_get_max_threads() * sizeof(double *));
+    int **local_rowsIndices = malloc(omp_get_max_threads() * sizeof(int *));
+    int **local_colsIndices = malloc(omp_get_max_threads() * sizeof(int *));
 
+    #pragma omp parallel
+    {
+        int thread_num = omp_get_thread_num();
+        local_values[thread_num] = malloc(nonZeroCount * sizeof(double));
+        local_rowsIndices[thread_num] = malloc(nonZeroCount * sizeof(int));
+        local_colsIndices[thread_num] = malloc(nonZeroCount * sizeof(int));
+        int local_idx = 0;
 
+        #pragma omp for nowait
+        for (int i = 0; i < indices->length; i++) {
+            int rowIndex = (int)indices->data[i];
+            for (int j = 0; j < columnIndices->length; j++) {
+                int colIndex = (int)columnIndices->data[j];
+                if (A.data[rowIndex * source->cols + colIndex] != 0) {
+                    local_values[thread_num][local_idx] = A.data[rowIndex * source->cols + colIndex];
+                    local_rowsIndices[thread_num][local_idx] = rowIndex;
+                    local_colsIndices[thread_num][local_idx] = colIndex;
+                    local_idx++;
+                }
+            }
+        }
 
+        local_counts[thread_num] = local_idx;
+    }
 
+    int total_count = 0;
+    for (int i = 0; i < omp_get_max_threads(); i++) {
+        total_count += local_counts[i];
+    }
+
+    destination->values = (double *)malloc(total_count * sizeof(double));
+    destination->rowsIndices = (int *)malloc(total_count * sizeof(int));
+    destination->colsIndices = (int *)malloc(total_count * sizeof(int));
+
+    int global_idx = 0;
+    for (int i = 0; i < omp_get_max_threads(); i++) {
+        memcpy(destination->values + global_idx, local_values[i], local_counts[i] * sizeof(double));
+        memcpy(destination->rowsIndices + global_idx, local_rowsIndices[i], local_counts[i] * sizeof(int));
+        memcpy(destination->colsIndices + global_idx, local_colsIndices[i], local_counts[i] * sizeof(int));
+        global_idx += local_counts[i];
+
+        free(local_values[i]);
+        free(local_rowsIndices[i]);
+        free(local_colsIndices[i]);
+    }
+
+    free(local_values);
+    free(local_rowsIndices);
+    free(local_colsIndices);
+    free(local_counts);
+
+    free(A.data);
+    destination->nonZeroCount = total_count;
+    destination->rows = source->rows;
+    destination->cols = columnIndices->length;
+    destination->depth = source->depth;
+}
 
 
 
@@ -664,6 +729,7 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
         free(Nij_nurbs.values);
 
     } else { // DIM =3
+        
     
         /* local_support_flat */
         //traduction de :
@@ -686,6 +752,7 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
             exit(1);
         }
         // Applatir local_support en un vecteur 
+        
         for (int i = 0 ; i < local_support_SIZE; i++){
             for( int j = 0 ; j < local_support.vectors[i].length ; j++ ){
             
@@ -693,6 +760,7 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
             index +=1;
             }
         }
+        
 
     //////////////
     //BF_mask = list(set(local_support_flat))
@@ -700,8 +768,9 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
      // On ajout <stdlib.h> pour la fonction qsort et on a crée la fonction compare pour les sorter en ordre croissant
      // Puis sorted element supprime les doublons (voir la fonction sortelements en haut)
         /* BF_mask */ 
-
+        
         SortElements(&local_support_flat, BF_mask);
+        
 
         free(local_support_flat.data); 
         local_support_flat.data=NULL;
@@ -709,14 +778,19 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
         /* BF_support_temp */
         // BF_support_temp = BF_support[BF_mask,:] on a créer la fonction selectRows
         
-        COOMatrix BF_support_rows_selected;
+        //COOMatrix BF_support_rows_selected;
 
         
-        selectRowsCOO(&BF_support, BF_mask, &BF_support_rows_selected);
-
+       // selectRowsCOO(&BF_support, BF_mask, &BF_support_rows_selected);
+        
         COOMatrix BF_support_temp;
-        selectColumnsCOO(&BF_support_rows_selected, &IND_mask_active, &BF_support_temp);
-        freeCOOMatrix(&BF_support_rows_selected);
+        selectRowcolsCOO(&BF_support,BF_mask,&IND_mask_active, &BF_support_temp);
+
+        
+        
+        //selectColumnsCOO(&BF_support_rows_selected, &IND_mask_active, &BF_support_temp);
+        
+        //freeCOOMatrix(&BF_support_rows_selected);
         //selectColumns(&BF_support_rows_selected, &IND_mask_active, &BF_support_temp);
        // free(BF_support_rows_selected.data);
         // W_temp = W[IND_mask[:,0],IND_mask[:,1]].reshape((len(IND_mask),1))
@@ -838,8 +912,7 @@ void der_NURBS(ListOfVectors local_support , COOMatrix BF_support , Vector IND_m
 
 
 Matrix der_BSPLINE(Vector IND_mask_active, Matrix BF_support) {
-    // Example implementation
-    // Allocate memory for the result matrix
-    // Translate Python logic into C
-    // Return the result
+    Matrix BF_support_temp;
+    selectColumns(&BF_support,&IND_mask_active,&BF_support_temp);
+    return BF_support_temp;
 }
