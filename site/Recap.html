@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Recap</title>
+    <style>
+        body { 
+            font-family: 'Arial', sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background-color: #f4f4f4;
+        }
+        header, footer { 
+            background-color: #003366; 
+            color: white; 
+            text-align: center; 
+            padding: 20px 0; 
+        }
+        
+        .content { 
+            margin: 20px auto; 
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 1200px; /* Limits width for large screens */
+        }
+        h1, h2 {
+            font-size: 2em;
+            color: #003366;
+        }
+        .content h2 {
+            margin: 40px 0 20px; /* Adds more space around section titles */
+        }
+        .content p {
+            font-size: 1.1em;
+            line-height: 1.6;
+            color: #080808;
+            margin-bottom: 20px;
+        }
+        .image-group {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .image-group img { 
+            width: 45%; /* Slightly reduced to allow space between images */
+            margin: 0 2.5%; /* Adds spacing between images */
+            vertical-align: middle; /* Vertical alignment to be on the same level */
+        }
+        .image-caption {
+            text-align: center;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        footer p {
+            margin: 0; /* Removes default paragraph margin in the footer */
+        }
+        nav ul { 
+            list-style-type: none; 
+            padding: 0; 
+            margin: 0;
+            text-align: center; 
+        }
+        nav ul li { 
+            display: inline; 
+            margin: 0 10px; 
+        }
+        nav a { 
+            color: white; 
+            text-decoration: none; 
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav>
+            <ul>
+                <li><a href="projet.html">Project-details</a></li>
+                <li><a href="Recap.html">Recap of the project</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="Gallery.html">gallery</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="content">
+        <section id="method">
+            <h2>METHOD</h2>
+            <p>First of all, the initial code was in Python according to this architecture:</p>
+            
+            <div class="image-group">
+                <img src="structure_python1.png" alt="Code structure in Python">
+                <img src="structure_python2.png" alt="Code structure in Python">
+            </div>
+            <p class="image-caption">Code structure in Python</p>
+
+            <div class="image-group">
+                <img src="frame1.png" alt="Code structure in C">
+                <img src="structure_c.png" alt="Code structure in C">
+            </div>
+            <p class="image-caption">Code structure in C</p>
+        </section>
+
+        <section id="results">
+            <h2>RESULTS</h2>
+            <p>We will subsequently present the different results obtained on memory and efficiency without completely presenting the content of the code. This can be obtained on request or by reading the available <a href="PROJET_CHP.pdf" class="about-link">presentation</a>.</p>
+            <p>The calculations were carried out on PLAFRIM and also on our local machines.</p>
+
+            <div class="image-group">
+                <img src="execution_time_3d.png" alt="Execution time over number of processors">
+            </div>
+            <p class="image-caption">Execution time over number of processors</p>
+
+            <div class="image-group">
+                <img src="speed2d.png" alt="Calculation of Speed-up for 2D implementation">
+                <img src="efficiency2d.png" alt="Calculation of Efficiency for 2D implementation">
+            </div>
+            <p class="image-caption">Calculation of Speed-up & Efficiency for 2D implementation</p>
+
+            <div class="image-group">
+                <img src="image.png" alt="Performance summary in different test functions">
+            </div>
+            <p class="image-caption">Performance summary in different test functions</p>
+
+        </section>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 C.TOULER - Z.ZIAD - A. EL GODE - M.NAIM - Y.REDOUANE. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Page</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header { 
+            background-color: #003366; 
+            color: white; 
+            text-align: center; 
+            padding: 20px 0; 
+        }
+        nav ul { 
+            list-style-type: none; 
+            padding: 0; 
+            margin: 0;
+            text-align: center; 
+        }
+        nav ul li { 
+            display: inline; 
+            margin: 0 10px; 
+        }
+        nav a { 
+            color: white; 
+            text-decoration: none; 
+            font-size: 1.2em;
+        }
+        .gallery {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+        }
+        .photo {
+            text-align: center;
+            width: 200px; /* Adjust based on your preference */
+        }
+        .photo img {
+            width: 100%;
+            border-radius: 10px; /* Optional for styling */
+        }
+        .description {
+            margin-top: 10px;
+        }
+        a {
+            color: blue;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Contact Us</h1>
+        <nav>
+            <ul>
+                <li><a href="projet.html">Project-details</a></li>
+                <li><a href="Recap.html">Recap of the project</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="Gallery.html">Gallery</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+    <div class="gallery">
+        <!-- Repeat the structure below for each image and description -->
+        <div class="photo">
+            <img src="Moi.jpeg" alt="Description Image 1">
+            <div class="description">Description 1. <a href="mailto:email@example.com">Contacter</a></div>
+        </div>
+        <div class="photo">
+            <img src="Mouna.jpeg" alt="Description Image 2">
+            <div class="description">Description 2. <a href="mailto:email@example.com">Contacter</a></div>
+        </div>
+        <div class="photo">
+            <img src="youss.jpeg" alt="Description Image 3">
+            <div class="description">Description 3. <a href="mailto:email@example.com">Contacter</a></div>
+        </div>
+        <div class="photo">
+            <img src="youss.jpeg" alt="Description Image 4">
+            <div class="description">Description 4. <a href="mailto:email@example.com">Contacter</a></div>
+        </div>
+        <div class="photo">
+            <img src="youss.jpeg" alt="Description Image 5">
+            <div class="description">Description 5. <a href="mailto:email@example.com">Contacter</a></div>
+        </div>
+    </div>
+
+    <section id="contact" style="background-color: #f8f8f8; padding: 40px; text-align: center;">
+        <h3 style="color: #003366; margin-bottom: 20px;">Contactez-nous</h3>
+        <p style="margin-bottom: 30px;">Formulaire de contact ou informations pour joindre l'équipe du projet.</p>
+        <form action="votre_script_de_traitement.php" method="POST" style="max-width: 400px; margin: auto;">
+            <div style="margin-bottom: 20px;">
+                <label for="name" style="display: block; margin-bottom: 5px;">Nom :</label>
+                <input type="text" id="name" name="name" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+            </div>
+    
+            <div style="margin-bottom: 20px;">
+                <label for="email" style="display: block; margin-bottom: 5px;">Email :</label>
+                <input type="email" id="email" name="email" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+            </div>
+    
+            <div style="margin-bottom: 20px;">
+                <label for="message" style="display: block; margin-bottom: 5px;">Message :</label>
+                <textarea id="message" name="message" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; height: 100px;"></textarea>
+            </div>
+    
+            <input type="submit" value="Envoyer" style="padding: 10px 20px; background-color: #003366; color: white; border: none; border-radius: 5px; cursor: pointer;">
+        </form>
+    </section>
+    
+
+</body>
+</html>
+  
+    
+    
+    
+    <!-- Section Contact avec formulaire si nécessaire -->
+
+    
